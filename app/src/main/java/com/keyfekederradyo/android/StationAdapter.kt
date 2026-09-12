@@ -1,7 +1,5 @@
 package com.keyfekederradyo.android
 
-import android.animation.Animator
-import android.animation.AnimatorListenerAdapter
 import android.animation.ValueAnimator
 import android.graphics.Color
 import android.graphics.Typeface
@@ -22,7 +20,15 @@ class StationAdapter(
     private val onFavorite: (Station) -> Unit
 ) : RecyclerView.Adapter<StationAdapter.Holder>() {
     private val items = mutableListOf<Station>()
-    private var playingUrl: String? = null
+    private var playingUrl: String? = PlaybackState.playingUrl
+    private val playbackListener: (String?) -> Unit = { url ->
+        playingUrl = url
+        notifyDataSetChanged()
+    }
+
+    init {
+        PlaybackState.addListener(playbackListener)
+    }
 
     fun submitList(stations: List<Station>) {
         items.clear()
@@ -30,11 +36,7 @@ class StationAdapter(
         notifyDataSetChanged()
     }
 
-    fun setPlayingStation(url: String?) {
-        if (playingUrl == url) return
-        playingUrl = url
-        notifyDataSetChanged()
-    }
+    fun setPlayingStation(url: String?) = PlaybackState.setPlaying(url)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): Holder {
         val context = parent.context
