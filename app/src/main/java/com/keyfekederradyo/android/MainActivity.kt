@@ -3,6 +3,7 @@ package com.keyfekederradyo.android
 import android.content.ComponentName
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
+import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -156,7 +157,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun loadStations() { executor.execute { try { val loaded = StationRepository().load(); runOnUiThread { stations = loaded; adapter.submitList(loaded); findViewById<View>(android.R.id.content).findViewWithTag<View>("loader")?.visibility = View.GONE } } catch (e: Exception) { runOnUiThread { status.text = "Radyolar yüklenemedi"; Toast.makeText(this, e.message ?: "Bağlantı hatası", Toast.LENGTH_LONG).show() } } } }
-    private fun play(s: Station) { currentIndex = stations.indexOfFirst { it.resolvedUrl == s.resolvedUrl }.coerceAtLeast(0); val item = MediaItem.Builder().setMediaId(s.resolvedUrl).setUri(s.resolvedUrl).setMediaMetadata(MediaMetadata.Builder().setTitle(s.name).build()).build(); controller?.setMediaItem(item); controller?.prepare(); controller?.play(); title.text = s.name; status.text = "Bağlanıyor..."; liveBadge.text = "BAĞLANIYOR"; liveBadge.setTextColor(orange); animateTap(mini) }
+    private fun play(s: Station) { currentIndex = stations.indexOfFirst { it.resolvedUrl == s.resolvedUrl }.coerceAtLeast(0); val item = MediaItem.Builder().setMediaId(s.resolvedUrl).setUri(s.resolvedUrl).setMediaMetadata(MediaMetadata.Builder().setTitle(s.name).setArtist("Keyfe Keder Radyo").setAlbumTitle("Canlı Yayın").setArtworkUri(Uri.parse("android.resource://$packageName/drawable/ic_keyfe_keder_logo")).build()).build(); controller?.setMediaItem(item); controller?.prepare(); controller?.play(); title.text = s.name; status.text = "Bağlanıyor..."; liveBadge.text = "BAĞLANIYOR"; liveBadge.setTextColor(orange); animateTap(mini) }
     private fun filter(q: String) { val x = q.trim().lowercase(); adapter.submitList(if (x.isBlank()) stations else stations.filter { it.name.lowercase().contains(x) || it.genre.lowercase().contains(x) || it.country.lowercase().contains(x) }) }
     private fun showFavorites() { adapter.submitList(stations.filter { isFavorite(it) }) }
 
