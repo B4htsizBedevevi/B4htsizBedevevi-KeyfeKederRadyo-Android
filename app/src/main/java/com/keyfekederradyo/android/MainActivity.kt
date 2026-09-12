@@ -223,22 +223,22 @@ class MainActivity : AppCompatActivity() {
 
     private fun buildHome() {
         homeContainer.removeAllViews()
-        homeContainer.addView(TextView(this).apply { text="Bugün ne dinlemek istiyorsun?"; textSize=24f; setTextColor(white); setTypeface(typeface,android.graphics.Typeface.BOLD); setPadding(d(4),d(8),d(4),0) })
-        homeContainer.addView(TextView(this).apply { text="Ruh haline bir frekans seç."; textSize=13f; setTextColor(muted); setPadding(d(4),d(2),d(4),d(12)) })
+        homeContainer.addView(TextView(this).apply{text="Selam 👋";textSize=13f;setTextColor(orange);setPadding(d(4),d(10),d(4),0)})
+        homeContainer.addView(TextView(this).apply{text="Bugün hangi frekanstasın?";textSize=27f;setTextColor(white);setTypeface(typeface,android.graphics.Typeface.BOLD);setPadding(d(4),d(2),d(4),0)})
+        homeContainer.addView(TextView(this).apply{text="Canın ne istiyorsa söyle, gerisini ben hallederim. 😌";textSize=13f;setTextColor(muted);setPadding(d(4),d(4),d(4),d(14))})
         homeContainer.addView(buildPickerCard())
-        val moods=listOf("🌙 Sakin" to listOf("chill","lounge","jazz","classical","easy"),"❤️ Arabesk" to listOf("arabesk","fantazi","damar"),"🔥 Pop" to listOf("pop","hit","top"),"🎸 Rock" to listOf("rock","metal","alternative"),"🕺 90'lar" to listOf("90","nostalgia","retro"))
-        val scroll=android.widget.HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled=false; overScrollMode=View.OVER_SCROLL_NEVER }
-        val row=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL }
-        moods.forEach { (label,tokens) ->
-            val chip=TextView(this).apply { text=label; textSize=12f; setTextColor(white); gravity=Gravity.CENTER; setPadding(d(15),0,d(15),0); background=rounded(surface2,20); setOnClickListener { tap(this); val filtered=stations.filter { st -> val h="${st.genre} ${st.name} ${st.song}"; tokens.any { t -> h.contains(t,true) } }; showRadios(filtered); selectNav(1) } }
-            row.addView(chip,LinearLayout.LayoutParams(-2,d(40)).apply { rightMargin=d(8) })
+        homeContainer.addView(TextView(this).apply{text="Hemen bir mod seç";textSize=18f;setTextColor(white);setTypeface(typeface,android.graphics.Typeface.BOLD);setPadding(d(4),d(18),d(4),d(8))})
+        val chips=android.widget.HorizontalScrollView(this).apply{isHorizontalScrollBarEnabled=false;overScrollMode=View.OVER_SCROLL_NEVER}
+        val row=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL}
+        listOf("🌙 Sakin","💔 Dertli","🔥 Enerjik","🚗 Yoldayım","☕ Kafamı dinliyorum").forEach{label->
+            val chip=TextView(this).apply{text=label;textSize=12f;setTextColor(white);gravity=Gravity.CENTER;setPadding(d(16),0,d(16),0);background=rounded(surface2,20);setOnClickListener{tap(this);pickForMe()}}
+            row.addView(chip,LinearLayout.LayoutParams(-2,d(42)).apply{rightMargin=d(8)})
         }
-        scroll.addView(row,ViewGroup.LayoutParams(-2,d(46))); homeContainer.addView(scroll,LinearLayout.LayoutParams(-1,d(50)))
-        addSection("Son Dinlediklerin",historyStations(),"Henüz bir radyo dinlemedin.")
-        addSection("Favorilerin",stations.filter{isFavorite(it)}.take(10),"Henüz favorin yok. Bir radyoya kalp bırak.")
-        addSection("Keyfe Keder Seçtik",stations.filter{it.genre.isNotBlank()}.take(10),"Sana birkaç frekans seçiyoruz.")
+        chips.addView(row,ViewGroup.LayoutParams(-2,d(46)));homeContainer.addView(chips,LinearLayout.LayoutParams(-1,d(52)))
+        addSection("Son dinlediklerin 👀",historyStations(),"Henüz birlikte bir radyo dinlemedik.")
+        addSection("Favorilerin ❤️",stations.filter{isFavorite(it)}.take(10),"Buraya sevdiğin radyoları atalım. Kalbe dokun yeter.")
+        addSection("Bizim seçimlerimiz 🧡",stations.filter{it.genre.isNotBlank()}.take(10),"Birazdan sana güzel frekanslar çıkarırım.")
     }
-
     private fun buildPickerCard():View {
         val card=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL; gravity=Gravity.CENTER_VERTICAL; setPadding(d(14),d(12),d(10),d(12)); background=GradientDrawable().apply { setColor(Color.rgb(39,27,20)); cornerRadius=d(24).toFloat(); setStroke(d(1),Color.rgb(105,58,28)) }; setOnClickListener { tap(this); pickForMe() } }
         card.addView(TextView(this).apply { text="🎲"; textSize=30f; gravity=Gravity.CENTER },LinearLayout.LayoutParams(d(58),d(62)))
@@ -386,8 +386,34 @@ class MainActivity : AppCompatActivity() {
         dialog.window?.setLayout(-1,(resources.displayMetrics.heightPixels*.78f).toInt())
     }
 
-    private fun buildDiscover(){ buildHome(); (homeContainer.getChildAt(0) as? TextView)?.text="Keşfet"; (homeContainer.getChildAt(1) as? TextView)?.text="Bugün hangi frekanstasın?" }
+    private fun buildDiscover() {
+        homeContainer.removeAllViews()
+        homeContainer.addView(TextView(this).apply { text="Biraz kurcalayalım mı? ✨"; textSize=25f; setTextColor(white); setTypeface(typeface,android.graphics.Typeface.BOLD); setPadding(d(4),d(12),d(4),0) })
+        homeContainer.addView(TextView(this).apply { text="Burada yeni frekanslar buluyoruz. Hep aynı radyoda takılmak yok. 😄"; textSize=13f; setTextColor(muted); setPadding(d(4),d(4),d(4),d(16)) })
+        homeContainer.addView(TextView(this).apply { text="🌙 Ruh haline göre"; textSize=18f; setTextColor(white); setTypeface(typeface,android.graphics.Typeface.BOLD); setPadding(d(4),d(8),d(4),d(8)) })
+        val sc=android.widget.HorizontalScrollView(this).apply{isHorizontalScrollBarEnabled=false;overScrollMode=View.OVER_SCROLL_NEVER}
+        val row=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL}
+        listOf("Sakin","Dertli","Enerjik","Gece","Yolculuk").forEach{label->
+            val chip=TextView(this).apply{text=label;textSize=12f;setTextColor(white);gravity=Gravity.CENTER;setPadding(d(15),0,d(15),0);background=rounded(surface2,20);setOnClickListener{tap(this);discoverFilter(label)}}
+            row.addView(chip,LinearLayout.LayoutParams(-2,d(42)).apply{rightMargin=d(8)})
+        }
+        sc.addView(row,ViewGroup.LayoutParams(-2,d(46)));homeContainer.addView(sc,LinearLayout.LayoutParams(-1,d(52)))
+        val history=prefs.getString("history","").orEmpty().split("|").filter{it.isNotBlank()}.toSet()
+        addSection("🆕 Daha önce dinlemediklerin",stations.filter{it.resolvedUrl !in history}.shuffled().take(10),"Hepsini denemişsin. O zaman Keyfime Bırak'a teslim ol. 😄")
+        addSection("🎲 Bugün ben seçtim",stations.shuffled().take(10),"Radyoları çekiyoruz, az sonra burada olur. 🙂")
+    }
 
+    private fun discoverFilter(filter:String) {
+        val rx=when(filter){
+            "Sakin"->Regex("chill|lounge|jazz|classical|easy",RegexOption.IGNORE_CASE)
+            "Dertli"->Regex("arabesk|fantazi|damar|slow",RegexOption.IGNORE_CASE)
+            "Enerjik"->Regex("pop|hit|top|dance",RegexOption.IGNORE_CASE)
+            "Gece"->Regex("night|gece|chill|lounge|slow",RegexOption.IGNORE_CASE)
+            else->Regex("road|drive|80|90",RegexOption.IGNORE_CASE)
+        }
+        val list=stations.filter{"${it.genre} ${it.name}".contains(rx)}
+        if(list.isEmpty()) android.widget.Toast.makeText(this,"Bu köşede şu an pek radyo yok. Başka birine bakalım. 🙂",android.widget.Toast.LENGTH_SHORT).show() else {showRadios(list);selectNav(1)}
+    }
     private fun addSection(name:String,list:List<Station>,empty:String){
         homeContainer.addView(TextView(this).apply{text=name;textSize=18f;setTextColor(white);setTypeface(typeface,android.graphics.Typeface.BOLD);setPadding(d(4),d(18),d(4),d(8))})
         if(list.isEmpty()){homeContainer.addView(TextView(this).apply{text=empty;textSize=12f;setTextColor(muted);setPadding(d(8),0,d(8),0)},LinearLayout.LayoutParams(-1,d(42)));return}
