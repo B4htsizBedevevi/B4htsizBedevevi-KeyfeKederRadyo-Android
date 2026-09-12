@@ -3,4 +3,5 @@
     <color name="radio_bg">#121212</color>
     <color name="radio_surface">#202020</color>
     <color name="radio_orange">#FF7A00</color>
+    <color name="icon_background">#121212</color>
 </resources>
