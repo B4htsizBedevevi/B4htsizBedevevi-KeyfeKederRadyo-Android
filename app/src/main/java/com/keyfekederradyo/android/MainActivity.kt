@@ -192,6 +192,29 @@ class MainActivity : AppCompatActivity() {
 
     private fun playRelative(delta: Int) { if (stations.isEmpty()) return; currentIndex = if (currentIndex < 0) 0 else (currentIndex + delta + stations.size) % stations.size; play(stations[currentIndex]) }
 
+    private fun syncCurrentStation() {
+        val p = controller ?: return
+        val item = p.currentMediaItem ?: return
+        val mediaId = item.mediaId
+        val index = stations.indexOfFirst { it.resolvedUrl == mediaId || it.url == mediaId }
+        if (index >= 0) {
+            currentIndex = index
+            title.text = stations[index].name
+            StationImageLoader.load(miniLogo, stations[index].logoUrl, R.drawable.ic_keyfe_keder_logo)
+        } else {
+            title.text = item.mediaMetadata.title?.toString() ?: "Bir radyo seç"
+        }
+        val playing = p.isPlaying
+        play.setImageResource(if (playing) R.drawable.ic_pause else R.drawable.ic_play)
+        spectrum.setPlaying(playing)
+        liveBadge.text = when {
+            playing -> "● CANLI"
+            p.playbackState == androidx.media3.common.Player.STATE_BUFFERING -> "BAĞLANIYOR"
+            else -> "RADYO"
+        }
+        liveBadge.setTextColor(if (playing || p.playbackState == androidx.media3.common.Player.STATE_BUFFERING) orange else muted)
+    }
+
     private fun connectPlayer() {
         val token = SessionToken(this, ComponentName(this, RadioPlaybackService::class.java))
         controllerFuture = MediaController.Builder(this, token).buildAsync()
@@ -215,10 +238,11 @@ class MainActivity : AppCompatActivity() {
                             else -> "RADYO"
                         }
                         liveBadge.setTextColor(if (playing || p.playbackState == androidx.media3.common.Player.STATE_BUFFERING) orange else muted)
+                        syncCurrentStation()
                     }
                     override fun onIsPlayingChanged(isPlaying: Boolean) = refresh()
                     override fun onPlaybackStateChanged(playbackState: Int) = refresh()
-                    override fun onMediaItemTransition(item: MediaItem?, reason: Int) { title.text = item?.mediaMetadata?.title ?: "Bir radyo seç"; refresh() }
+                    override fun onMediaItemTransition(item: MediaItem?, reason: Int) { title.text = item?.mediaMetadata?.title ?: "Bir radyo seç"; syncCurrentStation(); refresh() }
                     override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
                         val artist = mediaMetadata.artist?.toString().orEmpty()
                         if (artist.isNotBlank() && artist != "Keyfe Keder Radyo" && artist != "Canlı Yayın") status.text = artist
@@ -231,9 +255,7 @@ class MainActivity : AppCompatActivity() {
                     }
                     override fun onPlayerError(error: androidx.media3.common.PlaybackException) { status.text = "Yayın açılamadı"; spectrum.setPlaying(false); liveBadge.text = "RADYO"; liveBadge.setTextColor(muted) }
                 })
-                val playing = controller?.isPlaying == true
-                play.setImageResource(if (playing) R.drawable.ic_pause else R.drawable.ic_play)
-                spectrum.setPlaying(playing)
+                syncCurrentStation()
             } catch (_: Exception) { status.text = "Oynatıcı başlatılamadı" }
         }, ContextCompat.getMainExecutor(this))
     }
@@ -259,6 +281,7 @@ class MainActivity : AppCompatActivity() {
                 runOnUiThread {
                     stations = loaded
                     adapter.submitList(loaded)
+                    syncCurrentStation()
                     findViewById<View>(android.R.id.content).findViewWithTag<View>("loader")?.visibility = View.GONE
                 }
             } catch (_: Exception) {
@@ -276,7 +299,7 @@ class MainActivity : AppCompatActivity() {
         animateTap(mini)
     }
 
-    private fun filter(q: String) { val x = q.trim().lowercase(); adapter.submitList(if (x.isBlank()) stations else stations.filter { it.name.lowercase().contains(x) || it.genre.lowercase().contains(x) || it.country.lowercase().contains(x) }) }
+    private fun filter(q: String) { val x = q.trim().lowercase(); adapter.submitList(if (x.isBlank()) stations else stations.filter { it.name.lowercase().contains(x) || it.genre.lowercase().contains(x) || it.country.lowercase().contains(x) || it.language.lowercase().contains(x) }) }
     private fun showFavorites() { adapter.submitList(stations.filter { isFavorite(it) }) }
 
     private fun showCategories() {
