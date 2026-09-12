@@ -8,8 +8,8 @@
     <application
         android:allowBackup="true"
         android:label="Keyfe Keder Radyo"
-        android:icon="@mipmap/ic_launcher"
-        android:roundIcon="@mipmap/ic_launcher"
+        android:icon="@drawable/keyfe_keder_brand"
+        android:roundIcon="@drawable/keyfe_keder_brand"
         android:theme="@style/Theme.KeyfeKederRadyo"
         android:supportsRtl="true"
         android:usesCleartextTraffic="true">
