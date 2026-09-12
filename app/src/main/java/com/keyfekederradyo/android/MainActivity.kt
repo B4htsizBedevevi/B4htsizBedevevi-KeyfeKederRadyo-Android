@@ -141,7 +141,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun buildMiniPlayer(): View {
         val row = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL; setPadding(10.dp(), 7.dp(), 8.dp(), 7.dp()); background = rounded(surface2, 24); elevation = 8.dp().toFloat(); setOnClickListener { showFullPlayer() } }
-        miniLogo = ImageView(this).apply { setImageResource(R.drawable.ic_keyfe_keder_logo); scaleType = ImageView.ScaleType.CENTER_CROP; clipToOutline = true; background = rounded(Color.rgb(18,18,19), 16); layoutParams = LinearLayout.LayoutParams(50.dp(), 50.dp()).apply { rightMargin = 9.dp() } }
+        miniLogo = ImageView(this).apply { setImageResource(R.drawable.keyfe_keder_brand); scaleType = ImageView.ScaleType.CENTER_CROP; clipToOutline = true; background = rounded(Color.rgb(18,18,19), 16); layoutParams = LinearLayout.LayoutParams(50.dp(), 50.dp()).apply { rightMargin = 9.dp() } }
         val info = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_VERTICAL; layoutParams = LinearLayout.LayoutParams(0, -2, 1f) }
         title = TextView(this).apply { text = "Bir radyo seç"; textSize = 14f; setTextColor(white); maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END }
         status = TextView(this).apply { text = "Hazır"; textSize = 11f; setTextColor(muted); maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END }
@@ -179,7 +179,7 @@ class MainActivity : AppCompatActivity() {
         val close = TextView(this).apply { text = "⌄"; textSize = 28f; setTextColor(muted); gravity = Gravity.CENTER; contentDescription = "Kapat"; setOnClickListener { dialog.dismiss() } }
         root.addView(close, LinearLayout.LayoutParams(-1, 34.dp()))
         val logo = ImageView(this).apply { scaleType = ImageView.ScaleType.CENTER_CROP; background = rounded(Color.rgb(24,24,25), 100); clipToOutline = true }
-        if (currentIndex in stations.indices) StationImageLoader.load(logo, stations[currentIndex].logoUrl, R.drawable.ic_keyfe_keder_logo) else logo.setImageResource(R.drawable.ic_keyfe_keder_logo)
+        if (currentIndex in stations.indices) StationImageLoader.load(logo, stations[currentIndex].logoUrl, R.drawable.keyfe_keder_brand) else logo.setImageResource(R.drawable.keyfe_keder_brand)
         root.addView(logo, LinearLayout.LayoutParams(170.dp(), 170.dp()).apply { setMargins(0, 2.dp(), 0, 10.dp()) })
         val name = TextView(this).apply { text = title.text; textSize = 24f; setTextColor(white); gravity = Gravity.CENTER; setTypeface(typeface, android.graphics.Typeface.BOLD); maxLines = 2; ellipsize = android.text.TextUtils.TruncateAt.END }
         root.addView(name, LinearLayout.LayoutParams(-1, 48.dp()))
@@ -193,8 +193,8 @@ class MainActivity : AppCompatActivity() {
         val previous = button(R.drawable.ic_prev)
         val main = button(if (controller?.isPlaying == true) R.drawable.ic_pause else R.drawable.ic_play).apply { background = GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(orange) }; setPadding(20.dp(), 20.dp(), 20.dp(), 20.dp()); layoutParams = LinearLayout.LayoutParams(74.dp(), 74.dp()).apply { setMargins(18.dp(), 0, 18.dp(), 0) } }
         val next = button(R.drawable.ic_next)
-        previous.setOnClickListener { playRelative(-1); name.text = title.text; track.text = status.text; live.text = if (controller?.isPlaying == true) "●  CANLI" else "●  HAZIR"; if (currentIndex in stations.indices) StationImageLoader.load(logo, stations[currentIndex].logoUrl, R.drawable.ic_keyfe_keder_logo) }
-        next.setOnClickListener { playRelative(1); name.text = title.text; track.text = status.text; live.text = if (controller?.isPlaying == true) "●  CANLI" else "●  HAZIR"; if (currentIndex in stations.indices) StationImageLoader.load(logo, stations[currentIndex].logoUrl, R.drawable.ic_keyfe_keder_logo) }
+        previous.setOnClickListener { playRelative(-1); name.text = title.text; track.text = status.text; live.text = if (controller?.isPlaying == true) "●  CANLI" else "●  HAZIR"; if (currentIndex in stations.indices) StationImageLoader.load(logo, stations[currentIndex].logoUrl, R.drawable.keyfe_keder_brand) }
+        next.setOnClickListener { playRelative(1); name.text = title.text; track.text = status.text; live.text = if (controller?.isPlaying == true) "●  CANLI" else "●  HAZIR"; if (currentIndex in stations.indices) StationImageLoader.load(logo, stations[currentIndex].logoUrl, R.drawable.keyfe_keder_brand) }
         main.setOnClickListener { controller?.let { if (it.isPlaying) it.pause() else it.play() }; main.setImageResource(if (controller?.isPlaying == true) R.drawable.ic_pause else R.drawable.ic_play); live.text = if (controller?.isPlaying == true) "●  CANLI" else "●  HAZIR"; bigSpectrum.setPlaying(controller?.isPlaying == true) }
         controls.addView(previous); controls.addView(main); controls.addView(next); root.addView(controls)
         root.addView(TextView(this).apply { text = if (currentIndex >= 0 && isFavorite(stations[currentIndex])) "♥  Favorilerde" else "♡  Favorilere ekle"; textSize = 14f; setTextColor(white); gravity = Gravity.CENTER; setPadding(0, 12.dp(), 0, 0); setOnClickListener { if (currentIndex >= 0) { toggleFavorite(stations[currentIndex]); text = if (isFavorite(stations[currentIndex])) "♥  Favorilerde" else "♡  Favorilere ekle" } } }, LinearLayout.LayoutParams(-1, 42.dp()))
@@ -254,7 +254,7 @@ class MainActivity : AppCompatActivity() {
         if (index >= 0) {
             currentIndex = index
             title.text = stations[index].name
-            StationImageLoader.load(miniLogo, stations[index].logoUrl, R.drawable.ic_keyfe_keder_logo)
+            StationImageLoader.load(miniLogo, stations[index].logoUrl, R.drawable.keyfe_keder_brand)
         } else {
             title.text = item.mediaMetadata.title ?: "Bir radyo seç"
         }
@@ -299,7 +299,7 @@ class MainActivity : AppCompatActivity() {
         val item = MediaItem.Builder().setMediaId(s.resolvedUrl).setUri(s.resolvedUrl).setMediaMetadata(MediaMetadata.Builder().setTitle(s.name).setArtist("Keyfe Keder Radyo").setAlbumTitle("Canlı Yayın").setArtworkUri(Uri.parse("android.resource://$packageName/drawable/ic_keyfe_keder_logo")).setExtras(android.os.Bundle().apply { putString("fallback_url", s.url) }).build()).build()
         controller?.setMediaItem(item); controller?.prepare(); controller?.play()
         title.text = s.name; status.text = "Bağlanıyor..."; liveBadge.text = "BAĞLANIYOR"; liveBadge.setTextColor(orange)
-        StationImageLoader.load(miniLogo, s.logoUrl, R.drawable.ic_keyfe_keder_logo)
+        StationImageLoader.load(miniLogo, s.logoUrl, R.drawable.keyfe_keder_brand)
         animateTap(mini)
     }
 
