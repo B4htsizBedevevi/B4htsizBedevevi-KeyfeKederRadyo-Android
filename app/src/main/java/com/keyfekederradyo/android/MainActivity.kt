@@ -11,6 +11,7 @@ import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -88,7 +89,7 @@ class MainActivity : AppCompatActivity() {
                 } else if (selectedNav != 0) {
                     handleNav(0)
                 } else {
-                    finish()
+                    showExitDialog()
                 }
             }
         })
@@ -103,35 +104,54 @@ class MainActivity : AppCompatActivity() {
         }
         val top = LinearLayout(this).apply {
             gravity = Gravity.CENTER_VERTICAL
-            setPadding(d(14), d(8), d(10), d(6))
+            setPadding(d(10), d(7), d(10), d(6))
         }
         val brandBox = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
             layoutParams = LinearLayout.LayoutParams(0, d(62), 1f)
+            isClickable = true
+            setOnClickListener { tap(this) }
         }
         val brand = ImageView(this).apply {
             setImageResource(R.drawable.keyfe_keder_brand)
-            scaleType = ImageView.ScaleType.CENTER_INSIDE
-            contentDescription = "Keyfe Keder"
+            scaleType = ImageView.ScaleType.CENTER_CROP
+            clipToOutline = true
+            background = rounded(Color.rgb(18,18,19), 12)
+            contentDescription = "Keyfe Keder Radyo"
+        }
+        brandBox.addView(brand, LinearLayout.LayoutParams(d(48), d(48)).apply { rightMargin = d(10) })
+        val brandText = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+        val brandTitle = TextView(this).apply {
+            text = "KEYFE KEDER RADYO"
+            textSize = 17f
+            setTextColor(white)
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            letterSpacing = .03f
+            maxLines = 1
         }
         tagline = TextView(this).apply {
             text = taglines[0]
             textSize = 10.5f
             setTextColor(orange)
-            gravity = Gravity.CENTER
+            maxLines = 1
+            alpha = .9f
         }
-        brandBox.addView(brand, LinearLayout.LayoutParams(-1, d(36)))
-        brandBox.addView(tagline, LinearLayout.LayoutParams(-1, d(21)))
+        brandText.addView(brandTitle)
+        brandText.addView(tagline)
+        brandBox.addView(brandText, LinearLayout.LayoutParams(0, -2, 1f))
         val tools = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
-        val searchButton = iconButton(R.drawable.ic_search)
+        val searchButton = iconButton(R.drawable.ic_search).apply { contentDescription = "Radyo ara" }
         liveBadge = TextView(this).apply {
             text = "RADYO"
             textSize = 10f
             setTextColor(muted)
             gravity = Gravity.CENTER
             background = rounded(Color.rgb(28, 24, 21), 14)
-            layoutParams = LinearLayout.LayoutParams(d(64), d(30))
+            layoutParams = LinearLayout.LayoutParams(d(64), d(30)).apply { leftMargin = d(4) }
         }
         tools.addView(searchButton)
         tools.addView(liveBadge)
@@ -580,6 +600,42 @@ class MainActivity : AppCompatActivity() {
         adapter.notifyDataSetChanged()
         if (selectedNav == 0) buildHome()
         if (selectedNav == 3) showRadios(stations.filter { isFavorite(it) })
+    }
+
+    private fun showExitDialog() {
+        val playing = controller?.isPlaying == true
+        if (!playing) {
+            finishAndRemoveTask()
+            return
+        }
+        val dialog = android.app.AlertDialog.Builder(this)
+            .setTitle("Keyfe Keder Radyo")
+            .setMessage("Uygulamadan çıkmak istiyor musun?\n\nArka planda çalmaya devam edebilirim veya yayını tamamen kapatabilirim.")
+            .setPositiveButton("Arka planda çal") { _, _ ->
+                finishAndRemoveTask()
+            }
+            .setNegativeButton("Hayır, kapat") { _, _ ->
+                stopPlaybackAndClose()
+            }
+            .setNeutralButton("Vazgeç", null)
+            .create()
+        dialog.setOnShowListener {
+            dialog.getButton(android.content.DialogInterface.BUTTON_POSITIVE)?.setTextColor(orange)
+            dialog.getButton(android.content.DialogInterface.BUTTON_NEGATIVE)?.setTextColor(Color.rgb(255, 90, 90))
+            dialog.getButton(android.content.DialogInterface.BUTTON_NEUTRAL)?.setTextColor(muted)
+        }
+        dialog.show()
+    }
+
+    private fun stopPlaybackAndClose() {
+        try {
+            controller?.stop()
+            controller?.clearMediaItems()
+        } catch (_: Exception) { }
+        try {
+            stopService(android.content.Intent(this, RadioPlaybackService::class.java))
+        } catch (_: Exception) { }
+        finishAndRemoveTask()
     }
 
     private fun showSettings() {
