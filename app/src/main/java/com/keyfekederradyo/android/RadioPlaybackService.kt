@@ -58,7 +58,11 @@ class RadioPlaybackService : MediaSessionService() {
             .build()
         player.addListener(object : Player.Listener {
             override fun onMediaItemTransition(mediaItem: androidx.media3.common.MediaItem?, reason: Int) {
-                PlaybackState.setPlaying(mediaItem?.mediaId)
+                if (player.isPlaying) PlaybackState.setPlaying(mediaItem?.mediaId)
+            }
+
+            override fun onIsPlayingChanged(isPlaying: Boolean) {
+                PlaybackState.setPlaying(if (isPlaying) player.currentMediaItem?.mediaId else null)
             }
 
             override fun onPlayerError(error: PlaybackException) {
