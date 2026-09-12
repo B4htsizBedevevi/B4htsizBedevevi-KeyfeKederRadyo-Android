@@ -37,6 +37,7 @@ class RadioPlaybackService : MediaSessionService() {
                 reconnectHandler.removeCallbacks(reconnectRunnable)
                 player.pause()
                 player.clearMediaItems()
+                PlaybackState.setPlaying(null)
                 getSharedPreferences("radio", MODE_PRIVATE).edit().remove("sleep_until").apply()
                 stopSelf()
             } else {
@@ -56,7 +57,12 @@ class RadioPlaybackService : MediaSessionService() {
             .setHandleAudioBecomingNoisy(true)
             .build()
         player.addListener(object : Player.Listener {
+            override fun onMediaItemTransition(mediaItem: androidx.media3.common.MediaItem?, reason: Int) {
+                PlaybackState.setPlaying(mediaItem?.mediaId)
+            }
+
             override fun onPlayerError(error: PlaybackException) {
+                PlaybackState.setPlaying(null)
                 reconnectHandler.removeCallbacks(reconnectRunnable)
                 if (player.currentMediaItem != null && player.playWhenReady) {
                     reconnectHandler.postDelayed(reconnectRunnable, 4_000L)
@@ -77,6 +83,7 @@ class RadioPlaybackService : MediaSessionService() {
     override fun onDestroy() {
         timerHandler.removeCallbacks(timerRunnable)
         reconnectHandler.removeCallbacks(reconnectRunnable)
+        PlaybackState.setPlaying(null)
         if (::mediaSession.isInitialized) mediaSession.release()
         if (::player.isInitialized) player.release()
         super.onDestroy()
