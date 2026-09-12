@@ -108,9 +108,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun showFullPlayer(){
         if(isFinishing||isDestroyed)return
-        val current=stations.getOrNull(currentIndex)
-        if(current==null)return
-
+        val current=stations.getOrNull(currentIndex) ?: return
         val dialog=android.app.Dialog(this)
         fullPlayerDialog=dialog
         dialog.window?.setDimAmount(.74f)
@@ -124,33 +122,20 @@ class MainActivity : AppCompatActivity() {
                 setStroke(d(1),Color.rgb(58,45,38))
             }
         }
-
         val top=LinearLayout(this).apply{gravity=Gravity.CENTER_VERTICAL;layoutParams=LinearLayout.LayoutParams(-1,d(48))}
-        val close=TextView(this).apply{
-            text="⌄";textSize=30f;setTextColor(muted);gravity=Gravity.CENTER
-            setOnClickListener{tap(this);dialog.dismiss()}
-        }
+        val close=TextView(this).apply{text="⌄";textSize=30f;setTextColor(muted);gravity=Gravity.CENTER;setOnClickListener{tap(this);dialog.dismiss()}}
         top.addView(close,LinearLayout.LayoutParams(d(54),d(48)))
-        val now=TextView(this).apply{
-            text="ŞİMDİ ÇALIYOR";textSize=10f;setTextColor(orange);gravity=Gravity.CENTER
-            background=rounded(Color.rgb(43,28,20),16);setPadding(d(12),0,d(12),0);letterSpacing=.06f
-        }
+        val now=TextView(this).apply{text="ŞİMDİ ÇALIYOR";textSize=10f;setTextColor(orange);gravity=Gravity.CENTER;background=rounded(Color.rgb(43,28,20),16);setPadding(d(12),0,d(12),0);letterSpacing=.06f)}
         top.addView(now,LinearLayout.LayoutParams(-2,d(30)).apply{gravity=Gravity.CENTER})
         top.addView(View(this),LinearLayout.LayoutParams(0,1,1f))
-        val favorite=ImageButton(this).apply{
-            setImageResource(R.drawable.ic_heart);setColorFilter(if(isFavorite(current))orange else white)
-            setBackgroundColor(Color.TRANSPARENT);contentDescription="Favoriye ekle"
-        }
-        top.addView(favorite,LinearLayout.LayoutParams(d(48),d(48)))
-        root.addView(top)
+        val favorite=ImageButton(this).apply{setImageResource(R.drawable.ic_heart);setColorFilter(if(isFavorite(current))orange else white);setBackgroundColor(Color.TRANSPARENT);contentDescription="Favoriye ekle"}
+        top.addView(favorite,LinearLayout.LayoutParams(d(48),d(48)));root.addView(top)
 
         val logoFrame=FrameLayout(this).apply{
             gravity=Gravity.CENTER
             layoutParams=LinearLayout.LayoutParams(d(226),d(226)).apply{topMargin=d(8);bottomMargin=d(18)}
-            background=GradientDrawable().apply{
-                shape=GradientDrawable.OVAL;setColor(Color.rgb(22,22,24))
-                setStroke(d(2),Color.rgb(92,48,22))
-            }
+            background=GradientDrawable().apply{shape=GradientDrawable.OVAL;setColor(Color.rgb(22,22,24));setStroke(d(2),Color.rgb(92,48,22))}
+            elevation=d(5).toFloat()
         }
         val logo=StationArtworkView(this).apply{
             clipToOutline=true
@@ -162,28 +147,13 @@ class MainActivity : AppCompatActivity() {
         logoFrame.addView(logo,FrameLayout.LayoutParams(d(210),d(210)).apply{gravity=Gravity.CENTER})
         root.addView(logoFrame)
 
-        val stationName=TextView(this).apply{
-            text=current.name;textSize=25f;setTextColor(white);gravity=Gravity.CENTER
-            setTypeface(typeface,android.graphics.Typeface.BOLD);maxLines=2;ellipsize=android.text.TextUtils.TruncateAt.END
-        }
+        val stationName=TextView(this).apply{text=current.name;textSize=25f;setTextColor(white);gravity=Gravity.CENTER;setTypeface(typeface,android.graphics.Typeface.BOLD);maxLines=2;ellipsize=android.text.TextUtils.TruncateAt.END}
         root.addView(stationName,LinearLayout.LayoutParams(-1,d(64)))
-
-        val live=TextView(this).apply{
-            text=if(controller?.isPlaying==true)"●  CANLI YAYIN"else"YAYIN HAZIR"
-            textSize=11f;setTextColor(if(controller?.isPlaying==true)orange else muted);gravity=Gravity.CENTER;letterSpacing=.08f
-        }
+        val live=TextView(this).apply{text=if(controller?.isPlaying==true)"●  CANLI YAYIN"else"YAYIN HAZIR";textSize=11f;setTextColor(if(controller?.isPlaying==true)orange else muted);gravity=Gravity.CENTER;letterSpacing=.08f}
         root.addView(live,LinearLayout.LayoutParams(-1,d(28)))
-
-        val track=TextView(this).apply{
-            text=status.text.ifBlank{"Canlı yayın"};textSize=13f;setTextColor(white);gravity=Gravity.CENTER
-            maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.MARQUEE;isSelected=true
-            background=rounded(surface,20);setPadding(d(18),0,d(18),0)
-        }
+        val track=TextView(this).apply{text=nowPlaying.ifBlank{if(controller?.isPlaying==true)"CANLI • "+current.name else "Yayın hazır"};textSize=13f;setTextColor(white);gravity=Gravity.CENTER;maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.MARQUEE;isSelected=true;background=rounded(surface,20);setPadding(d(18),0,d(18),0)}
         root.addView(track,LinearLayout.LayoutParams(-1,d(42)).apply{topMargin=d(4)})
-
-        val bigSpectrum=AudioSpectrumView(this).apply{
-            setPlaying(controller?.isPlaying==true)
-        }
+        val bigSpectrum=AudioSpectrumView(this).apply{setPlaying(controller?.isPlaying==true)}
         root.addView(bigSpectrum,LinearLayout.LayoutParams(-1,d(46)).apply{topMargin=d(8);bottomMargin=d(8)})
 
         val controls=LinearLayout(this).apply{gravity=Gravity.CENTER;setPadding(0,d(4),0,0)}
@@ -198,8 +168,8 @@ class MainActivity : AppCompatActivity() {
         val next=iconButton(R.drawable.ic_next).apply{layoutParams=LinearLayout.LayoutParams(d(60),d(60))}
 
         fun refreshStationVisuals(){
-            if(dialog.isShowing.not()||isFinishing||isDestroyed)return
-            val st=stations.getOrNull(currentIndex) ?: return
+            if(!dialog.isShowing||isFinishing||isDestroyed)return
+            val st=stations.getOrNull(currentIndex)?:return
             stationName.text=st.name
             logo.bind(st.name,st.genre)
             logo.setPlaying(controller?.isPlaying==true)
@@ -212,24 +182,18 @@ class MainActivity : AppCompatActivity() {
         }
 
         favorite.setOnClickListener{
-            val st=stations.getOrNull(currentIndex) ?: return@setOnClickListener
+            val st=stations.getOrNull(currentIndex)?:return@setOnClickListener
             tap(this);toggleFavorite(st);setColorFilter(if(isFavorite(st))orange else white)
         }
         main.setOnClickListener{tap(this);togglePlay();postDelayed({refreshStationVisuals()},100L)}
         previous.setOnClickListener{tap(it);playRelative(-1);refreshStationVisuals()}
         next.setOnClickListener{tap(it);playRelative(1);refreshStationVisuals()}
 
-        controls.addView(previous);controls.addView(main);controls.addView(next)
-        root.addView(controls,LinearLayout.LayoutParams(-1,d(92)))
-
+        controls.addView(previous);controls.addView(main);controls.addView(next);root.addView(controls,LinearLayout.LayoutParams(-1,d(92)))
         dialog.setContentView(root)
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
         dialog.setCanceledOnTouchOutside(true)
-        dialog.setOnDismissListener{
-            logo.setPlaying(false)
-            bigSpectrum.setPlaying(false)
-            fullPlayerDialog=null
-        }
+        dialog.setOnDismissListener{logo.setPlaying(false);bigSpectrum.setPlaying(false);fullPlayerDialog=null}
         dialog.show()
         dialog.window?.setLayout(-1,(resources.displayMetrics.heightPixels*.90f).toInt())
     }
