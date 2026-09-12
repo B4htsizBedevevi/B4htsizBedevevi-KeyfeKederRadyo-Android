@@ -13,7 +13,7 @@ class AudioSpectrumView @JvmOverloads constructor(
     attrs: AttributeSet? = null
 ) : View(context, attrs) {
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
-    private var phase = 0.0
+    private var phase = 0f
     private var active = false
 
     init { paint.strokeCap = Paint.Cap.ROUND }
@@ -32,14 +32,14 @@ class AudioSpectrumView @JvmOverloads constructor(
         paint.color = 0xFFFF7A00.toInt()
         paint.strokeWidth = maxOf(2f, gap * .16f)
         for (i in 0 until count) {
-            val envelope = 0.25 + 0.75 * (1.0 - abs(i - count / 2f) / (count / 2f))
-            val wave = if (active) abs(sin(phase + i * .73)) else .12
-            val h = maxHeight * envelope * (.16 + .84 * wave)
+            val envelope = (0.25f + 0.75f * (1f - abs(i - count / 2f) / (count / 2f)))
+            val wave = if (active) abs(sin((phase + i * .73f).toDouble())).toFloat() else .12f
+            val h = maxHeight * envelope * (.16f + .84f * wave)
             val x = gap * (i + 1)
-            canvas.drawLine(x, center - h / 2, x, center + h / 2, paint)
+            canvas.drawLine(x, center - h / 2f, x, center + h / 2f, paint)
         }
         if (active) {
-            phase += .11
+            phase += .11f
             postInvalidateDelayed(32)
         }
     }
