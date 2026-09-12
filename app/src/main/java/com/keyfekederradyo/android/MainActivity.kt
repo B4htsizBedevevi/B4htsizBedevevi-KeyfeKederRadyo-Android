@@ -38,6 +38,7 @@ class MainActivity : AppCompatActivity() {
     private val prefs by lazy { getSharedPreferences("radio", MODE_PRIVATE) }; private val executor=Executors.newSingleThreadExecutor(); private val handler=Handler(Looper.getMainLooper())
     private val taglines=listOf("Keyfinin Frekansı.","Keyfin Neyi Çekerse.","Ruh Haline Bir Frekans.","Her Moda Bir Radyo.","Bir Frekans, Bin Keyif.")
     private var taglineIndex=0; private var stations=emptyList<Station>(); private var currentIndex=-1; private var selectedNav=0; private var controller:MediaController?=null; private var controllerFuture:ListenableFuture<MediaController>?=null; private var nowPlaying=""
+    private var fullPlayerDialog:android.app.Dialog?=null
     private lateinit var adapter:StationAdapter; private lateinit var homeScroll:ScrollView; private lateinit var homeContainer:LinearLayout; private lateinit var stationList:RecyclerView; private lateinit var search:EditText; private lateinit var title:TextView; private lateinit var status:TextView; private lateinit var liveBadge:TextView; private lateinit var tagline:TextView; private lateinit var play:ImageButton; private lateinit var spectrum:AudioSpectrumView; private lateinit var miniLogo:StationArtworkView
     private val navCards=mutableListOf<View>(); private val navIcons=mutableListOf<ImageView>(); private val navLabels=mutableListOf<TextView>()
     private val taglineRunnable=object:Runnable{override fun run(){if(isFinishing||isDestroyed)return;tagline.animate().alpha(0f).setDuration(160).withEndAction{if(isFinishing||isDestroyed)return@withEndAction;taglineIndex=(taglineIndex+1)%taglines.size;tagline.text=taglines[taglineIndex];tagline.animate().alpha(1f).setDuration(240).start()}.start();handler.postDelayed(this,3600L)}}
@@ -86,7 +87,11 @@ class MainActivity : AppCompatActivity() {
     private fun syncCurrentStation(){val p=controller?:return;val item=p.currentMediaItem?:return;val index=stations.indexOfFirst{it.resolvedUrl==item.mediaId};if(index>=0){currentIndex=index;title.text=stations[index].name;miniLogo.bind(stations[index].name,stations[index].genre)};play.setImageResource(if(p.isPlaying)R.drawable.ic_pause else R.drawable.ic_play);spectrum.setPlaying(p.isPlaying)}
     private fun togglePlay(){controller?.let{if(it.isPlaying)it.pause()else it.play()}}
     private fun formatNowPlaying(raw:String):String{val cleaned=raw.replace(Regex("\\s+")," ").trim();val parts=cleaned.split(Regex("\\s+[-–—/]\\s+|\\|"),limit=2);return if(parts.size==2)parts[0].trim()+" • "+parts[1].trim()else cleaned}
-    private fun playRelative(delta:Int){if(stations.isEmpty())return;currentIndex=if(currentIndex<0)0 else(currentIndex+delta+stations.size)%stations.size;play(stations[currentIndex])}
+    private fun playRelative(delta:Int){
+        if(stations.isEmpty())return
+        currentIndex=if(currentIndex<0)0 else(currentIndex+delta+stations.size)%stations.size
+        play(stations[currentIndex])
+    }
     private fun play(station:Station){if(isFinishing||isDestroyed)return;rememberStation(station);currentIndex=stations.indexOfFirst{it.resolvedUrl==station.resolvedUrl}.coerceAtLeast(0);val metadata=androidx.media3.common.MediaMetadata.Builder().setTitle(station.name).setArtist("Keyfe Keder Radyo").setAlbumTitle("Canlı Yayın").setArtworkUri(Uri.parse("android.resource://$packageName/drawable/station_artwork_default")).build();val item=MediaItem.Builder().setMediaId(station.resolvedUrl).setUri(station.resolvedUrl).setMediaMetadata(metadata).build();try{controller?.setMediaItem(item);controller?.prepare();controller?.play()}catch(_:Exception){status.text="Yayın başlatılamadı";return};title.text=station.name;nowPlaying="";status.text="Bağlanıyor...";liveBadge.text="BAĞLANIYOR";liveBadge.setTextColor(orange);miniLogo.bind(station.name,station.genre)}
     private fun filter(query:String){val q=query.trim();val list=if(q.isBlank())stations else stations.filter{it.name.contains(q,true)||it.genre.contains(q,true)||it.country.contains(q,true)||it.language.contains(q,true)};if(selectedNav==0){showRadios(list);selectNav(1)}else adapter.submitList(list)}
     private fun loadStations(){executor.execute{try{val loaded=StationRepository().load();runOnUiThread{if(isFinishing||isDestroyed)return@runOnUiThread;stations=loaded;adapter.submitList(loaded);if(selectedNav==0)buildHome();syncCurrentStation()}}catch(_:Exception){runOnUiThread{if(!isFinishing&&!isDestroyed)status.text="Radyolar yüklenemedi"}}}}
@@ -101,10 +106,137 @@ class MainActivity : AppCompatActivity() {
     private fun settingCard(icon:String,name:String,detail:String,action:(()->Unit)?):View{val card=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL;gravity=Gravity.CENTER_VERTICAL;setPadding(d(14),d(9),d(12),d(9));background=rounded(surface2,18);isClickable=action!=null;if(action!=null)setOnClickListener{tap(this);action.invoke()}};card.addView(TextView(this).apply{text=icon;textSize=19f;gravity=Gravity.CENTER},LinearLayout.LayoutParams(d(42),d(50)));val info=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;gravity=Gravity.CENTER_VERTICAL;layoutParams=LinearLayout.LayoutParams(0,-2,1f)};info.addView(TextView(this).apply{text=name;textSize=14f;setTextColor(white);setTypeface(typeface,android.graphics.Typeface.BOLD)});info.addView(TextView(this).apply{text=detail;textSize=10f;setTextColor(muted);maxLines=1});card.addView(info);if(action!=null)card.addView(TextView(this).apply{text="›";textSize=24f;setTextColor(muted);gravity=Gravity.CENTER},LinearLayout.LayoutParams(d(24),d(50)));return card}
     private fun sleepTimerLabel():String{val until=prefs.getLong("sleep_until",0L);if(until<=System.currentTimeMillis())return "Kapalı";val mins=((until-System.currentTimeMillis())/60000L).coerceAtLeast(1L);return "Yaklaşık "+mins+" dk kaldı"}
 
-    private fun showFullPlayer(){if(isFinishing||isDestroyed)return;val dialog=android.app.Dialog(this);dialog.window?.setDimAmount(.72f);val current=stations.getOrNull(currentIndex);val root=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;gravity=Gravity.CENTER_HORIZONTAL;setPadding(d(22),d(10),d(22),d(18));background=GradientDrawable().apply{setColor(bg);cornerRadii=floatArrayOf(d(30).toFloat(),d(30).toFloat(),d(30).toFloat(),d(30).toFloat(),0f,0f,0f,0f);setStroke(d(1),Color.rgb(48,48,51))}};val top=LinearLayout(this).apply{gravity=Gravity.CENTER_VERTICAL;layoutParams=LinearLayout.LayoutParams(-1,d(48))};val close=TextView(this).apply{text="⌄";textSize=30f;setTextColor(muted);gravity=Gravity.CENTER;setOnClickListener{tap(this);dialog.dismiss()}};top.addView(close,LinearLayout.LayoutParams(d(54),d(48)));val now=TextView(this).apply{text="ŞİMDİ ÇALIYOR";textSize=10f;setTextColor(orange);gravity=Gravity.CENTER;background=rounded(Color.rgb(43,28,20),16);setPadding(d(12),0,d(12),0)};top.addView(now,LinearLayout.LayoutParams(-2,d(30)).apply{gravity=Gravity.CENTER});top.addView(View(this),LinearLayout.LayoutParams(0,1,1f));val favorite=ImageButton(this).apply{setImageResource(R.drawable.ic_heart);setColorFilter(if(current!=null&&isFavorite(current))orange else white);setBackgroundColor(Color.TRANSPARENT);contentDescription="Favoriye ekle";setOnClickListener{current?.let{tap(this);toggleFavorite(it);setColorFilter(if(isFavorite(it))orange else white)}}};top.addView(favorite,LinearLayout.LayoutParams(d(48),d(48)));root.addView(top);val logoFrame=FrameLayout(this).apply{gravity=Gravity.CENTER;layoutParams=LinearLayout.LayoutParams(d(226),d(226)).apply{topMargin=d(8);bottomMargin=d(18)};background=GradientDrawable().apply{shape=GradientDrawable.OVAL;setColor(Color.rgb(22,22,24));setStroke(d(2),Color.rgb(77,43,24))}};val logo=StationArtworkView(this).apply{clipToOutline=true;background=GradientDrawable().apply{shape=GradientDrawable.OVAL;setColor(Color.rgb(24,24,25))};contentDescription=current?.name?:"Radyo";bind(current?.name?:"RADYO",current?.genre?:"")};logoFrame.addView(logo,FrameLayout.LayoutParams(d(210),d(210)).apply{gravity=Gravity.CENTER});root.addView(logoFrame);root.addView(TextView(this).apply{text=current?.name?:title.text;textSize=25f;setTextColor(white);gravity=Gravity.CENTER;setTypeface(typeface,android.graphics.Typeface.BOLD);maxLines=2;ellipsize=android.text.TextUtils.TruncateAt.END},LinearLayout.LayoutParams(-1,d(64)));root.addView(TextView(this).apply{text=if(controller?.isPlaying==true)"●  CANLI YAYIN"else"YAYIN HAZIR";textSize=11f;setTextColor(if(controller?.isPlaying==true)orange else muted);gravity=Gravity.CENTER;letterSpacing=.08f},LinearLayout.LayoutParams(-1,d(28)));root.addView(TextView(this).apply{text=status.text.ifBlank{"Canlı yayın"};textSize=13f;setTextColor(white);gravity=Gravity.CENTER;maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.MARQUEE;isSelected=true;background=rounded(surface,20);setPadding(d(18),0,d(18),0)},LinearLayout.LayoutParams(-1,d(42)).apply{topMargin=d(4)});val bigSpectrum=AudioSpectrumView(this).apply{setPlaying(controller?.isPlaying==true)};root.addView(bigSpectrum,LinearLayout.LayoutParams(-1,d(46)).apply{topMargin=d(8);bottomMargin=d(8)});val controls=LinearLayout(this).apply{gravity=Gravity.CENTER;setPadding(0,d(4),0,0)};val previous=iconButton(R.drawable.ic_prev).apply{layoutParams=LinearLayout.LayoutParams(d(60),d(60))};val main=ImageButton(this).apply{setImageResource(if(controller?.isPlaying==true)R.drawable.ic_pause else R.drawable.ic_play);setColorFilter(white);background=GradientDrawable().apply{shape=GradientDrawable.OVAL;setColor(orange)};elevation=d(6).toFloat();contentDescription="Oynat / duraklat";layoutParams=LinearLayout.LayoutParams(d(82),d(82)).apply{setMargins(d(20),0,d(20),0)};setOnClickListener{tap(this);togglePlay();postDelayed({if(!isFinishing&&!isDestroyed&&!dialog.isShowing)return@postDelayed;setImageResource(if(controller?.isPlaying==true)R.drawable.ic_pause else R.drawable.ic_play);bigSpectrum.setPlaying(controller?.isPlaying==true)},120)}};val next=iconButton(R.drawable.ic_next).apply{layoutParams=LinearLayout.LayoutParams(d(60),d(60))};previous.setOnClickListener{tap(it);playRelative(-1);dialog.dismiss();handler.postDelayed({if(!isFinishing&&!isDestroyed)showFullPlayer()},180)};next.setOnClickListener{tap(it);playRelative(1);dialog.dismiss();handler.postDelayed({if(!isFinishing&&!isDestroyed)showFullPlayer()},180)};controls.addView(previous);controls.addView(main);controls.addView(next);root.addView(controls,LinearLayout.LayoutParams(-1,d(92)));dialog.setContentView(root);dialog.window?.setBackgroundDrawableResource(android.R.color.transparent);dialog.setCanceledOnTouchOutside(true);dialog.show();dialog.window?.setLayout(-1,(resources.displayMetrics.heightPixels*.90f).toInt())}
+    private fun showFullPlayer(){
+        if(isFinishing||isDestroyed)return
+        val current=stations.getOrNull(currentIndex)
+        if(current==null)return
+
+        val dialog=android.app.Dialog(this)
+        fullPlayerDialog=dialog
+        dialog.window?.setDimAmount(.74f)
+        val root=LinearLayout(this).apply{
+            orientation=LinearLayout.VERTICAL
+            gravity=Gravity.CENTER_HORIZONTAL
+            setPadding(d(22),d(10),d(22),d(18))
+            background=GradientDrawable().apply{
+                setColor(bg)
+                cornerRadii=floatArrayOf(d(30).toFloat(),d(30).toFloat(),d(30).toFloat(),d(30).toFloat(),0f,0f,0f,0f)
+                setStroke(d(1),Color.rgb(58,45,38))
+            }
+        }
+
+        val top=LinearLayout(this).apply{gravity=Gravity.CENTER_VERTICAL;layoutParams=LinearLayout.LayoutParams(-1,d(48))}
+        val close=TextView(this).apply{
+            text="⌄";textSize=30f;setTextColor(muted);gravity=Gravity.CENTER
+            setOnClickListener{tap(this);dialog.dismiss()}
+        }
+        top.addView(close,LinearLayout.LayoutParams(d(54),d(48)))
+        val now=TextView(this).apply{
+            text="ŞİMDİ ÇALIYOR";textSize=10f;setTextColor(orange);gravity=Gravity.CENTER
+            background=rounded(Color.rgb(43,28,20),16);setPadding(d(12),0,d(12),0);letterSpacing=.06f
+        }
+        top.addView(now,LinearLayout.LayoutParams(-2,d(30)).apply{gravity=Gravity.CENTER})
+        top.addView(View(this),LinearLayout.LayoutParams(0,1,1f))
+        val favorite=ImageButton(this).apply{
+            setImageResource(R.drawable.ic_heart);setColorFilter(if(isFavorite(current))orange else white)
+            setBackgroundColor(Color.TRANSPARENT);contentDescription="Favoriye ekle"
+        }
+        top.addView(favorite,LinearLayout.LayoutParams(d(48),d(48)))
+        root.addView(top)
+
+        val logoFrame=FrameLayout(this).apply{
+            gravity=Gravity.CENTER
+            layoutParams=LinearLayout.LayoutParams(d(226),d(226)).apply{topMargin=d(8);bottomMargin=d(18)}
+            background=GradientDrawable().apply{
+                shape=GradientDrawable.OVAL;setColor(Color.rgb(22,22,24))
+                setStroke(d(2),Color.rgb(92,48,22))
+            }
+        }
+        val logo=StationArtworkView(this).apply{
+            clipToOutline=true
+            background=GradientDrawable().apply{shape=GradientDrawable.OVAL;setColor(Color.rgb(24,24,25))}
+            contentDescription=current.name
+            bind(current.name,current.genre)
+            setPlaying(controller?.isPlaying==true)
+        }
+        logoFrame.addView(logo,FrameLayout.LayoutParams(d(210),d(210)).apply{gravity=Gravity.CENTER})
+        root.addView(logoFrame)
+
+        val stationName=TextView(this).apply{
+            text=current.name;textSize=25f;setTextColor(white);gravity=Gravity.CENTER
+            setTypeface(typeface,android.graphics.Typeface.BOLD);maxLines=2;ellipsize=android.text.TextUtils.TruncateAt.END
+        }
+        root.addView(stationName,LinearLayout.LayoutParams(-1,d(64)))
+
+        val live=TextView(this).apply{
+            text=if(controller?.isPlaying==true)"●  CANLI YAYIN"else"YAYIN HAZIR"
+            textSize=11f;setTextColor(if(controller?.isPlaying==true)orange else muted);gravity=Gravity.CENTER;letterSpacing=.08f
+        }
+        root.addView(live,LinearLayout.LayoutParams(-1,d(28)))
+
+        val track=TextView(this).apply{
+            text=status.text.ifBlank{"Canlı yayın"};textSize=13f;setTextColor(white);gravity=Gravity.CENTER
+            maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.MARQUEE;isSelected=true
+            background=rounded(surface,20);setPadding(d(18),0,d(18),0)
+        }
+        root.addView(track,LinearLayout.LayoutParams(-1,d(42)).apply{topMargin=d(4)})
+
+        val bigSpectrum=AudioSpectrumView(this).apply{
+            setPlaying(controller?.isPlaying==true)
+        }
+        root.addView(bigSpectrum,LinearLayout.LayoutParams(-1,d(46)).apply{topMargin=d(8);bottomMargin=d(8)})
+
+        val controls=LinearLayout(this).apply{gravity=Gravity.CENTER;setPadding(0,d(4),0,0)}
+        val previous=iconButton(R.drawable.ic_prev).apply{layoutParams=LinearLayout.LayoutParams(d(60),d(60))}
+        val main=ImageButton(this).apply{
+            setImageResource(if(controller?.isPlaying==true)R.drawable.ic_pause else R.drawable.ic_play)
+            setColorFilter(white)
+            background=GradientDrawable().apply{shape=GradientDrawable.OVAL;setColor(orange)}
+            elevation=d(6).toFloat();contentDescription="Oynat / duraklat"
+            layoutParams=LinearLayout.LayoutParams(d(82),d(82)).apply{setMargins(d(20),0,d(20),0)}
+        }
+        val next=iconButton(R.drawable.ic_next).apply{layoutParams=LinearLayout.LayoutParams(d(60),d(60))}
+
+        fun refreshStationVisuals(){
+            if(dialog.isShowing.not()||isFinishing||isDestroyed)return
+            val st=stations.getOrNull(currentIndex) ?: return
+            stationName.text=st.name
+            logo.bind(st.name,st.genre)
+            logo.setPlaying(controller?.isPlaying==true)
+            favorite.setColorFilter(if(isFavorite(st))orange else white)
+            track.text=nowPlaying.ifBlank{if(controller?.isPlaying==true)"CANLI • "+st.name else "Yayın hazır"}
+            live.text=if(controller?.isPlaying==true)"●  CANLI YAYIN"else"YAYIN HAZIR"
+            live.setTextColor(if(controller?.isPlaying==true)orange else muted)
+            main.setImageResource(if(controller?.isPlaying==true)R.drawable.ic_pause else R.drawable.ic_play)
+            bigSpectrum.setPlaying(controller?.isPlaying==true)
+        }
+
+        favorite.setOnClickListener{
+            val st=stations.getOrNull(currentIndex) ?: return@setOnClickListener
+            tap(this);toggleFavorite(st);setColorFilter(if(isFavorite(st))orange else white)
+        }
+        main.setOnClickListener{tap(this);togglePlay();postDelayed({refreshStationVisuals()},100L)}
+        previous.setOnClickListener{tap(it);playRelative(-1);refreshStationVisuals()}
+        next.setOnClickListener{tap(it);playRelative(1);refreshStationVisuals()}
+
+        controls.addView(previous);controls.addView(main);controls.addView(next)
+        root.addView(controls,LinearLayout.LayoutParams(-1,d(92)))
+
+        dialog.setContentView(root)
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialog.setCanceledOnTouchOutside(true)
+        dialog.setOnDismissListener{
+            logo.setPlaying(false)
+            bigSpectrum.setPlaying(false)
+            fullPlayerDialog=null
+        }
+        dialog.show()
+        dialog.window?.setLayout(-1,(resources.displayMetrics.heightPixels*.90f).toInt())
+    }
+
     private fun iconButton(resId:Int)=ImageButton(this).apply{setImageResource(resId);setBackgroundColor(Color.TRANSPARENT);setColorFilter(white);layoutParams=LinearLayout.LayoutParams(d(52),d(52))}
     private fun rounded(color:Int,radiusDp:Int)=GradientDrawable().apply{setColor(color);cornerRadius=d(radiusDp).toFloat()}
     private fun tap(view:View){view.animate().scaleX(.96f).scaleY(.96f).setDuration(70).withEndAction{view.animate().scaleX(1f).scaleY(1f).setDuration(130).start()}.start()}
     private fun d(value:Int)=(value*resources.displayMetrics.density).toInt()
-    override fun onDestroy(){handler.removeCallbacksAndMessages(null);controllerFuture?.let{MediaController.releaseFuture(it)};executor.shutdownNow();super.onDestroy()}
+    override fun onDestroy(){fullPlayerDialog=null;handler.removeCallbacksAndMessages(null);controllerFuture?.let{MediaController.releaseFuture(it)};executor.shutdownNow();super.onDestroy()}
 }
