@@ -26,9 +26,10 @@ class StationArtworkView(context: Context) : ImageView(context) {
     fun bind(name: String, genreValue: String, artworkUrl: String = "") {
         label = name.take(12).uppercase()
         genre = genreValue.lowercase()
-        logoUrl = artworkUrl
+        logoUrl = "brand"
         seed = name.hashCode().ushr(1)
-        if (artworkUrl.isBlank()) setImageDrawable(null) else StationImageLoader.load(this, artworkUrl, R.drawable.keyfe_keder_brand)
+        setImageResource(R.drawable.keyfe_keder_brand)
+        scaleType = ImageView.ScaleType.CENTER_CROP
         invalidate()
     }
 
@@ -88,36 +89,12 @@ class StationArtworkView(context: Context) : ImageView(context) {
         glowPaint.shader = RadialGradient(w*(1f-gx*.55f),h*.88f,r*(.34f+pulse*.20f),accent,0x0009090A,Shader.TileMode.CLAMP)
         canvas.drawCircle(w*(1f-gx*.55f),h*.88f,r*(.34f+pulse*.20f),glowPaint)
 
-        linePaint.style = Paint.Style.STROKE; linePaint.strokeCap = Paint.Cap.ROUND
-        linePaint.color = accent; linePaint.strokeWidth = maxOf(1f,w*.012f)
-        val cx = w*.5f; val cy = h*.40f
-        val rings = 3 + seed % 3
-        for (i in 1..rings) canvas.drawCircle(cx,cy,r*(.15f+i*.105f),linePaint.apply{alpha=55+i*22})
-        linePaint.alpha=150
-        val bars=16
-        val gap=w/(bars+3)
-        for(i in 0 until bars){
-            val wave=((i*37+label.length*11+seed)%11)/11f
-            val bh=h*(.10f+wave*.30f)*(if(active) 1f + .10f*sin((phase+i*.55f).toDouble()).toFloat() else 1f)
-            canvas.drawLine(gap*(i+1),h*.82f,gap*(i+1),h*.82f-bh,linePaint)
-        }
-
-        // Subtle station label for generated fallback artwork only.
-        if (logoUrl.isBlank()) {
-            textPaint.textAlign=Paint.Align.CENTER
-            textPaint.color=0xFFF5F5F7.toInt()
-            textPaint.textSize=w*.075f
-            textPaint.typeface=android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT,android.graphics.Typeface.BOLD)
-            canvas.drawText(label,cx,h*.58f,textPaint)
-            textPaint.color=0xA8FFFFFF.toInt()
-            textPaint.textSize=w*.038f
-            canvas.drawText(if(genre.isBlank()) "LIVE RADIO" else genre.uppercase().take(16),cx,h*.66f,textPaint)
-        }
-
-        linePaint.style=Paint.Style.FILL; linePaint.color=accent; linePaint.alpha=190
-        canvas.drawCircle(w*.12f,h*.12f,maxOf(1.5f,w*.012f),linePaint)
-        canvas.drawCircle(w*.88f,h*.74f,maxOf(1.5f,w*.012f),linePaint)
-
+        // Keep the logo clean: audio visualization belongs in the player, not on top of the artwork.
+        linePaint.style = Paint.Style.STROKE
+        linePaint.strokeWidth = maxOf(1.5f, w*.012f)
+        linePaint.color = accent
+        linePaint.alpha = (70 + pulse*90f).toInt()
+        canvas.drawRoundRect(w*.08f,h*.08f,w*.92f,h*.92f,r*.16f,r*.16f,linePaint)
         if (active && width > 0 && height > 0) {
             phase += .085f
             postInvalidateOnAnimation()
