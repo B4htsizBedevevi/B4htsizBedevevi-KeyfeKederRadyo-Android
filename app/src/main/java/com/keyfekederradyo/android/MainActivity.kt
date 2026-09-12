@@ -15,7 +15,6 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.media3.common.MediaItem
@@ -147,7 +146,7 @@ class MainActivity : AppCompatActivity() {
             background = rounded(surface, 18)
         }
         tabs.addView(tab("TÜMÜ", true) { adapter.submitList(stations) })
-        tabs.addView(tab("FAVORİLER", false) { adapter.submitList(stations.filter { isFavorite(it) }) })
+        tabs.addView(tab("FAVORİLER", false) { showFavorites() })
         tabs.addView(tab("KATEGORİLER", false) { showCategories() })
         root.addView(tabs, LinearLayout.LayoutParams(-1, 48.dp()).apply { setMargins(10.dp(), 0, 10.dp(), 10.dp()) })
 
@@ -228,10 +227,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun handleNav(index: Int) {
         when (index) {
-            1 -> Toast.makeText(this, "Radyolar", Toast.LENGTH_SHORT).show()
+            0 -> adapter.submitList(stations)
+            1 -> adapter.submitList(stations)
             2 -> showCategories()
-            3 -> adapter.submitList(stations.filter { isFavorite(it) })
-            4 -> Toast.makeText(this, "Ayarlar yakında", Toast.LENGTH_SHORT).show()
+            3 -> showFavorites()
+            4 -> showSettings()
         }
     }
 
@@ -241,7 +241,7 @@ class MainActivity : AppCompatActivity() {
         val close = TextView(this).apply { text = "⌄"; textSize = 28f; setTextColor(muted); gravity = Gravity.CENTER; setOnClickListener { dialog.dismiss() } }
         root.addView(close, LinearLayout.LayoutParams(-1, 36.dp()))
         val logo = ImageView(this).apply { setImageResource(R.drawable.ic_keyfe_keder_logo); scaleType = ImageView.ScaleType.CENTER_INSIDE; background = rounded(Color.rgb(24,24,25), 120); elevation = 18.dp().toFloat() }
-        root.addView(logo, LinearLayout.LayoutParams(220.dp(), 220.dp()).apply { setMargins(0, 18.dp(), 0, 22.dp()) })
+        root.addView(logo, LinearLayout.LayoutParams(190.dp(), 190.dp()).apply { setMargins(0, 12.dp(), 0, 18.dp()) })
         val name = TextView(this).apply { text = title.text; textSize = 25f; setTextColor(white); gravity = Gravity.CENTER; setTypeface(typeface, android.graphics.Typeface.BOLD) }
         root.addView(name, LinearLayout.LayoutParams(-1, 40.dp()))
         val live = TextView(this).apply { text = "●  CANLI"; textSize = 12f; setTextColor(orange); gravity = Gravity.CENTER }
@@ -323,14 +323,115 @@ class MainActivity : AppCompatActivity() {
         val item = MediaItem.Builder().setMediaId(s.resolvedUrl).setUri(s.resolvedUrl)
             .setMediaMetadata(MediaMetadata.Builder().setTitle(s.name).build()).build()
         controller?.setMediaItem(item); controller?.prepare(); controller?.play()
-        title.text = s.name; status.text = "Bağlanıyor..."; liveBadge.text = "● CANLI"; liveBadge.setTextColor(orange)
+        title.text = s.name; status.text = "Bağlanıyor..."; liveBadge.text = "BAĞLANIYOR"; liveBadge.setTextColor(orange)
         animateTap(mini)
     }
 
     private fun filter(q: String) { val x = q.trim().lowercase(); adapter.submitList(if (x.isBlank()) stations else stations.filter { it.name.lowercase().contains(x) || it.genre.lowercase().contains(x) || it.country.lowercase().contains(x) }) }
+    private fun showFavorites() {
+        adapter.submitList(stations.filter { isFavorite(it) })
+    }
+
     private fun showCategories() {
-        val genres = stations.flatMap { it.genre.split(",", ";") }.map { it.trim() }.filter { it.isNotBlank() }.distinct().take(12)
-        Toast.makeText(this, if (genres.isEmpty()) "Kategori bulunamadı" else genres.joinToString(" • "), Toast.LENGTH_LONG).show()
+        val genres = stations.flatMap { it.genre.split(",", ";") }
+            .map { it.trim() }.filter { it.isNotBlank() }.distinct().sorted()
+
+        val dialog = android.app.Dialog(this)
+        val root = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(22.dp(), 20.dp(), 22.dp(), 20.dp())
+            background = rounded(Color.rgb(24, 24, 26), 28)
+        }
+        root.addView(TextView(this).apply {
+            text = "Kategoriler"
+            textSize = 23f
+            setTextColor(white)
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+        }, LinearLayout.LayoutParams(-1, 42.dp()))
+
+        genres.forEach { genre ->
+            root.addView(TextView(this).apply {
+                text = genre
+                textSize = 15f
+                setTextColor(white)
+                gravity = Gravity.CENTER_VERTICAL
+                setPadding(16.dp(), 0, 16.dp(), 0)
+                background = rounded(surface2, 18)
+                setOnClickListener {
+                    adapter.submitList(stations.filter { it.genre.contains(genre, ignoreCase = true) })
+                    dialog.dismiss()
+                }
+            }, LinearLayout.LayoutParams(-1, 48.dp()).apply { bottomMargin = 8.dp() })
+        }
+
+        root.addView(TextView(this).apply {
+            text = "Tüm radyolar"
+            textSize = 14f
+            setTextColor(orange)
+            gravity = Gravity.CENTER
+            setOnClickListener { adapter.submitList(stations); dialog.dismiss() }
+        }, LinearLayout.LayoutParams(-1, 44.dp()))
+
+        dialog.setContentView(root)
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialog.show()
+        dialog.window?.setLayout(-1, -2)
+    }
+
+    private fun showSettings() {
+        val dialog = android.app.Dialog(this)
+        val root = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(22.dp(), 20.dp(), 22.dp(), 20.dp())
+            background = rounded(Color.rgb(24, 24, 26), 28)
+        }
+        root.addView(TextView(this).apply {
+            text = "Ayarlar"
+            textSize = 23f
+            setTextColor(white)
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+        }, LinearLayout.LayoutParams(-1, 42.dp()))
+
+        root.addView(TextView(this).apply {
+            text = "🌙  Uyku zamanlayıcısı"
+            textSize = 15f
+            setTextColor(white)
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(16.dp(), 0, 16.dp(), 0)
+            background = rounded(surface2, 18)
+            setOnClickListener {
+                val options = arrayOf("Kapalı", "15 dakika", "30 dakika", "45 dakika", "60 dakika", "90 dakika")
+                android.app.AlertDialog.Builder(this@MainActivity)
+                    .setTitle("Uyku zamanlayıcısı")
+                    .setItems(options) { d, which ->
+                        val mins = when (which) {
+                            0 -> 0L
+                            1 -> 15L
+                            2 -> 30L
+                            3 -> 45L
+                            4 -> 60L
+                            else -> 90L
+                        }
+                        prefs.edit().putLong("sleep_until",
+                            if (mins == 0L) 0L else System.currentTimeMillis() + mins * 60_000L
+                        ).apply()
+                        d.dismiss()
+                    }.show()
+            }
+        }, LinearLayout.LayoutParams(-1, 54.dp()).apply { topMargin = 12.dp() })
+
+        root.addView(TextView(this).apply {
+            text = "Kapat"
+            textSize = 14f
+            setTextColor(orange)
+            gravity = Gravity.CENTER
+            setOnClickListener { dialog.dismiss() }
+        }, LinearLayout.LayoutParams(-1, 44.dp()).apply { topMargin = 8.dp() })
+
+        dialog.setContentView(root)
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialog.show()
+        dialog.window?.setLayout(-1, -2)
     }
     private fun isFavorite(s: Station) = prefs.getBoolean(s.resolvedUrl, false)
     private fun toggleFavorite(s: Station) { prefs.edit().putBoolean(s.resolvedUrl, !isFavorite(s)).apply(); adapter.notifyDataSetChanged() }
