@@ -26,7 +26,7 @@ import androidx.media3.common.Metadata
 import androidx.media3.extractor.metadata.icy.IcyInfo
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
-import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.common.util.concurrent.ListenableFuture
 import java.util.concurrent.Executors
@@ -122,7 +122,18 @@ class MainActivity : AppCompatActivity() {
 
         val loader = ProgressBar(this).apply { tag = "loader" }
         root.addView(loader, LinearLayout.LayoutParams(-1, 40.dp()).apply { gravity = Gravity.CENTER })
-        val list = RecyclerView(this).apply { layoutManager = LinearLayoutManager(this@MainActivity); overScrollMode = View.OVER_SCROLL_NEVER; setPadding(0, 0, 0, 6.dp()); clipToPadding = false }
+        val list = RecyclerView(this).apply {
+            layoutManager = GridLayoutManager(this@MainActivity, 2)
+            overScrollMode = View.OVER_SCROLL_NEVER
+            setPadding(5.dp(), 0, 5.dp(), 8.dp())
+            clipToPadding = false
+            itemAnimator = androidx.recyclerview.widget.DefaultItemAnimator().apply {
+                addDuration = 220
+                removeDuration = 180
+                changeDuration = 180
+                moveDuration = 220
+            }
+        }
         adapter = StationAdapter({ play(it) }, { isFavorite(it) }, { toggleFavorite(it) }); list.adapter = adapter; root.addView(list, LinearLayout.LayoutParams(-1, 0, 1f))
         mini = buildMiniPlayer(); root.addView(mini, LinearLayout.LayoutParams(-1, 76.dp()).apply { setMargins(8.dp(), 4.dp(), 8.dp(), 6.dp()) }); root.addView(buildBottomNav(), LinearLayout.LayoutParams(-1, 68.dp()))
         return root
@@ -192,29 +203,6 @@ class MainActivity : AppCompatActivity() {
 
     private fun playRelative(delta: Int) { if (stations.isEmpty()) return; currentIndex = if (currentIndex < 0) 0 else (currentIndex + delta + stations.size) % stations.size; play(stations[currentIndex]) }
 
-    private fun syncCurrentStation() {
-        val p = controller ?: return
-        val item = p.currentMediaItem ?: return
-        val mediaId = item.mediaId
-        val index = stations.indexOfFirst { it.resolvedUrl == mediaId || it.url == mediaId }
-        if (index >= 0) {
-            currentIndex = index
-            title.text = stations[index].name
-            StationImageLoader.load(miniLogo, stations[index].logoUrl, R.drawable.ic_keyfe_keder_logo)
-        } else {
-            title.text = item.mediaMetadata.title?.toString() ?: "Bir radyo seç"
-        }
-        val playing = p.isPlaying
-        play.setImageResource(if (playing) R.drawable.ic_pause else R.drawable.ic_play)
-        spectrum.setPlaying(playing)
-        liveBadge.text = when {
-            playing -> "● CANLI"
-            p.playbackState == androidx.media3.common.Player.STATE_BUFFERING -> "BAĞLANIYOR"
-            else -> "RADYO"
-        }
-        liveBadge.setTextColor(if (playing || p.playbackState == androidx.media3.common.Player.STATE_BUFFERING) orange else muted)
-    }
-
     private fun connectPlayer() {
         val token = SessionToken(this, ComponentName(this, RadioPlaybackService::class.java))
         controllerFuture = MediaController.Builder(this, token).buildAsync()
@@ -238,11 +226,10 @@ class MainActivity : AppCompatActivity() {
                             else -> "RADYO"
                         }
                         liveBadge.setTextColor(if (playing || p.playbackState == androidx.media3.common.Player.STATE_BUFFERING) orange else muted)
-                        syncCurrentStation()
                     }
                     override fun onIsPlayingChanged(isPlaying: Boolean) = refresh()
                     override fun onPlaybackStateChanged(playbackState: Int) = refresh()
-                    override fun onMediaItemTransition(item: MediaItem?, reason: Int) { title.text = item?.mediaMetadata?.title ?: "Bir radyo seç"; syncCurrentStation(); refresh() }
+                    override fun onMediaItemTransition(item: MediaItem?, reason: Int) { title.text = item?.mediaMetadata?.title ?: "Bir radyo seç"; refresh() }
                     override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
                         val artist = mediaMetadata.artist?.toString().orEmpty()
                         if (artist.isNotBlank() && artist != "Keyfe Keder Radyo" && artist != "Canlı Yayın") status.text = artist
@@ -258,6 +245,23 @@ class MainActivity : AppCompatActivity() {
                 syncCurrentStation()
             } catch (_: Exception) { status.text = "Oynatıcı başlatılamadı" }
         }, ContextCompat.getMainExecutor(this))
+    }
+
+    private fun syncCurrentStation() {
+        val p = controller ?: return
+        val item = p.currentMediaItem ?: return
+        val index = stations.indexOfFirst { it.resolvedUrl == item.mediaId }
+        if (index >= 0) {
+            currentIndex = index
+            title.text = stations[index].name
+            StationImageLoader.load(miniLogo, stations[index].logoUrl, R.drawable.ic_keyfe_keder_logo)
+        } else {
+            title.text = item.mediaMetadata.title ?: "Bir radyo seç"
+        }
+        play.setImageResource(if (p.isPlaying) R.drawable.ic_pause else R.drawable.ic_play)
+        spectrum.setPlaying(p.isPlaying)
+        liveBadge.text = if (p.isPlaying) "● CANLI" else "RADYO"
+        liveBadge.setTextColor(if (p.isPlaying) orange else muted)
     }
 
     private fun updateNowPlaying(raw: String) {
