@@ -25,24 +25,26 @@ class StationAdapter(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): Holder {
-        val c = parent.context
-        val row = LinearLayout(c).apply {
+        val context = parent.context
+        val row = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            setPadding(14.dp(c), 8.dp(c), 10.dp(c), 8.dp(c))
-            layoutParams = RecyclerView.LayoutParams(-1, 82.dp(c)).apply {
-                leftMargin = 10.dp(c); rightMargin = 10.dp(c); bottomMargin = 7.dp(c)
+            setPadding(14.dp(context), 8.dp(context), 10.dp(context), 8.dp(context))
+            layoutParams = RecyclerView.LayoutParams(-1, 82.dp(context)).apply {
+                leftMargin = 10.dp(context)
+                rightMargin = 10.dp(context)
+                bottomMargin = 7.dp(context)
             }
             background = GradientDrawable().apply {
                 setColor(Color.rgb(27, 27, 29))
-                cornerRadius = 20.dp(c).toFloat()
-                setStroke(1.dp(c), Color.rgb(46, 46, 49))
+                cornerRadius = 20.dp(context).toFloat()
+                setStroke(1.dp(context), Color.rgb(46, 46, 49))
             }
             isClickable = true
             isFocusable = true
         }
 
-        val logo = TextView(c).apply {
+        val logoView = TextView(context).apply {
             gravity = Gravity.CENTER
             textSize = 16f
             setTextColor(Color.WHITE)
@@ -50,72 +52,96 @@ class StationAdapter(
             background = GradientDrawable().apply {
                 shape = GradientDrawable.OVAL
                 setColor(Color.rgb(48, 48, 52))
-                setStroke(1.dp(c), Color.rgb(78, 78, 82))
+                setStroke(1.dp(context), Color.rgb(78, 78, 82))
             }
-            layoutParams = LinearLayout.LayoutParams(56.dp(c), 56.dp(c)).apply { rightMargin = 13.dp(c) }
+            layoutParams = LinearLayout.LayoutParams(56.dp(context), 56.dp(context)).apply {
+                rightMargin = 13.dp(context)
+            }
         }
 
-        val text = LinearLayout(c).apply {
+        val infoLayout = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER_VERTICAL
             layoutParams = LinearLayout.LayoutParams(0, -1, 1f)
         }
-        val title = TextView(c).apply {
+        val titleView = TextView(context).apply {
             textSize = 16f
             setTextColor(Color.rgb(245, 245, 247))
             typeface = Typeface.DEFAULT_BOLD
             maxLines = 1
             ellipsize = android.text.TextUtils.TruncateAt.END
         }
-        val meta = TextView(c).apply {
+        val metaView = TextView(context).apply {
             textSize = 11.5f
             setTextColor(Color.rgb(145, 145, 150))
             maxLines = 1
             ellipsize = android.text.TextUtils.TruncateAt.END
         }
-        val live = TextView(c).apply {
-            text = "● CANLI"
+        val badgeView = TextView(context).apply {
             textSize = 9.5f
             setTextColor(Color.rgb(255, 122, 0))
             visibility = View.GONE
         }
-        text.addView(title, LinearLayout.LayoutParams(-1, 27.dp(c)))
-        text.addView(meta, LinearLayout.LayoutParams(-1, 22.dp(c)))
-        text.addView(live, LinearLayout.LayoutParams(-1, 18.dp(c)))
+        infoLayout.addView(titleView, LinearLayout.LayoutParams(-1, 27.dp(context)))
+        infoLayout.addView(metaView, LinearLayout.LayoutParams(-1, 22.dp(context)))
+        infoLayout.addView(badgeView, LinearLayout.LayoutParams(-1, 18.dp(context)))
 
-        val fav = ImageButton(c).apply {
+        val favoriteView = ImageButton(context).apply {
             setBackgroundColor(Color.TRANSPARENT)
             setColorFilter(Color.rgb(210, 210, 214))
-            layoutParams = LinearLayout.LayoutParams(48.dp(c), 48.dp(c))
+            layoutParams = LinearLayout.LayoutParams(48.dp(context), 48.dp(context))
             contentDescription = "Favorilere ekle"
         }
-        row.addView(logo); row.addView(text); row.addView(fav)
-        return Holder(row, logo, title, meta, live, fav)
+
+        row.addView(logoView)
+        row.addView(infoLayout)
+        row.addView(favoriteView)
+        return Holder(row, logoView, titleView, metaView, badgeView, favoriteView)
     }
 
-    override fun onBindViewHolder(h: Holder, position: Int) {
-        val s = items[position]
-        h.logo.text = s.name.trim().split(" ").filter { it.isNotBlank() }.take(2)
+    override fun onBindViewHolder(holder: Holder, position: Int) {
+        val station = items[position]
+        val initials = station.name.trim().split(" ")
+            .filter { it.isNotBlank() }
+            .take(2)
             .joinToString("") { it.first().uppercaseChar().toString() }
-        h.title.text = s.name
-        h.meta.text = listOf(s.genre, s.country, s.quality).filter { it.isNotBlank() }
-            .joinToString(" • ").ifBlank { "Canlı radyo" }
-        h.live.visibility = if (isFavorite(s)) View.VISIBLE else View.GONE
-        h.live.text = if (isFavorite(s)) "● FAVORİ" else ""
-        h.favorite.setImageResource(
-            if (isFavorite(s)) android.R.drawable.btn_star_big_on else android.R.drawable.btn_star_big_off
+
+        holder.logoView.text = initials
+        holder.titleView.text = station.name
+        holder.metaView.text = listOf(station.genre, station.country, station.quality)
+            .filter { it.isNotBlank() }
+            .joinToString(" • ")
+            .ifBlank { "Canlı radyo" }
+
+        val favorite = isFavorite(station)
+        holder.badgeView.visibility = if (favorite) View.VISIBLE else View.GONE
+        holder.badgeView.text = if (favorite) "● FAVORİ" else ""
+        holder.favoriteView.setImageResource(
+            if (favorite) android.R.drawable.btn_star_big_on
+            else android.R.drawable.btn_star_big_off
         )
-        h.itemView.setOnClickListener {
-            h.itemView.animate().scaleX(.985f).scaleY(.985f).setDuration(70).withEndAction {
-                h.itemView.animate().scaleX(1f).scaleY(1f).setDuration(120).start()
-            }.start()
-            onClick(s)
+
+        holder.itemView.setOnClickListener {
+            holder.itemView.animate()
+                .scaleX(.985f).scaleY(.985f)
+                .setDuration(70)
+                .withEndAction {
+                    holder.itemView.animate()
+                        .scaleX(1f).scaleY(1f)
+                        .setDuration(120)
+                        .start()
+                }.start()
+            onClick(station)
         }
-        h.favorite.setOnClickListener {
-            h.favorite.animate().rotationBy(18f).setDuration(80).withEndAction {
-                h.favorite.animate().rotation(0f).setDuration(100).start()
-            }.start()
-            onFavorite(s)
+
+        holder.favoriteView.setOnClickListener {
+            holder.favoriteView.animate()
+                .rotationBy(18f)
+                .setDuration(80)
+                .withEndAction {
+                    holder.favoriteView.animate().rotation(0f).setDuration(100).start()
+                }.start()
+            onFavorite(station)
             notifyItemChanged(position)
         }
     }
@@ -123,13 +149,14 @@ class StationAdapter(
     override fun getItemCount() = items.size
 
     class Holder(
-        v: View,
-        val logo: TextView,
-        val title: TextView,
-        val meta: TextView,
-        val live: TextView,
-        val favorite: ImageButton
-    ) : RecyclerView.ViewHolder(v)
+        view: View,
+        val logoView: TextView,
+        val titleView: TextView,
+        val metaView: TextView,
+        val badgeView: TextView,
+        val favoriteView: ImageButton
+    ) : RecyclerView.ViewHolder(view)
 }
 
-private fun Int.dp(c: android.content.Context) = (this * c.resources.displayMetrics.density).toInt()
+private fun Int.dp(context: android.content.Context) =
+    (this * context.resources.displayMetrics.density).toInt()
