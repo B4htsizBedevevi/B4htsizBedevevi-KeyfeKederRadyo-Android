@@ -16,12 +16,25 @@ class RadioPlaybackService : MediaSessionService() {
     private lateinit var player: ExoPlayer
     private lateinit var mediaSession: MediaSession
     private val timerHandler = Handler(Looper.getMainLooper())
+    private val reconnectHandler = Handler(Looper.getMainLooper())
+    private val reconnectRunnable = object : Runnable {
+        override fun run() {
+            if (!::player.isInitialized) return
+            val item = player.currentMediaItem ?: return
+            if (!player.playWhenReady) return
+            val until = getSharedPreferences("radio", MODE_PRIVATE).getLong("sleep_until", 0L)
+            if (until > 0L && until <= System.currentTimeMillis()) return
+            player.prepare()
+            player.play()
+        }
+    }
     private val timerRunnable = object : Runnable {
         override fun run() {
             val until = getSharedPreferences("radio", MODE_PRIVATE).getLong("sleep_until", 0L)
             if (until <= 0L) return
             val remaining = until - System.currentTimeMillis()
             if (remaining <= 0L) {
+                reconnectHandler.removeCallbacks(reconnectRunnable)
                 player.pause()
                 player.clearMediaItems()
                 getSharedPreferences("radio", MODE_PRIVATE).edit().remove("sleep_until").apply()
@@ -44,7 +57,10 @@ class RadioPlaybackService : MediaSessionService() {
             .build()
         player.addListener(object : Player.Listener {
             override fun onPlayerError(error: PlaybackException) {
-                // A bad station must never crash the playback service.
+                reconnectHandler.removeCallbacks(reconnectRunnable)
+                if (player.currentMediaItem != null && player.playWhenReady) {
+                    reconnectHandler.postDelayed(reconnectRunnable, 4_000L)
+                }
             }
         })
         mediaSession = MediaSession.Builder(this, player).build()
@@ -60,6 +76,7 @@ class RadioPlaybackService : MediaSessionService() {
 
     override fun onDestroy() {
         timerHandler.removeCallbacks(timerRunnable)
+        reconnectHandler.removeCallbacks(reconnectRunnable)
         if (::mediaSession.isInitialized) mediaSession.release()
         if (::player.isInitialized) player.release()
         super.onDestroy()
