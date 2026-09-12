@@ -130,7 +130,7 @@ class MainActivity : AppCompatActivity() {
         val brandText = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_VERTICAL }
         val brandTitle = TextView(this).apply {
             text = "KEYFE KEDER RADYO"
-            textSize = 17f
+            textSize = 15.5f
             setTextColor(white)
             setTypeface(typeface, android.graphics.Typeface.BOLD)
             letterSpacing = 0.03f
@@ -237,16 +237,16 @@ class MainActivity : AppCompatActivity() {
             row.addView(chip,LinearLayout.LayoutParams(-2,d(42)).apply{rightMargin=d(8)})
         }
         chips.addView(row,ViewGroup.LayoutParams(-2,d(46)));homeContainer.addView(chips,LinearLayout.LayoutParams(-1,d(52)))
-        addSection("Son dinlediklerin Göz atalım",historyStations(),"Henüz birlikte bir radyo dinlemedik.")
-        addSection("Favorilerin Kalp",stations.filter{isFavorite(it)}.take(10),"Buraya sevdiğin radyoları atalım. Kalbe dokun yeter.")
-        addSection("Bizim seçimlerimiz Bizim seçimlerimiz",stations.filter{it.genre.isNotBlank()}.take(10),"Birazdan sana güzel frekanslar çıkarırım.")
+        addSection("Son dinlediklerin",historyStations(),"Henüz birlikte bir radyo dinlemedik.")
+        addSection("Favorilerin",stations.filter{isFavorite(it)}.take(10),"Buraya sevdiğin radyoları atalım. Kalbe dokun yeter.")
+        addSection("Bizim seçimlerimiz",stations.filter{it.genre.isNotBlank()}.take(10),"Birazdan sana güzel frekanslar çıkarırım.")
     }
     private fun buildPickerCard():View {
         val card=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL; gravity=Gravity.CENTER_VERTICAL; setPadding(d(14),d(12),d(10),d(12)); background=GradientDrawable().apply { setColor(Color.rgb(39,27,20)); cornerRadius=d(24).toFloat(); setStroke(d(1),Color.rgb(105,58,28)) }; setOnClickListener { tap(this); pickForMe() } }
-        card.addView(TextView(this).apply { text="Rastgele"; textSize=30f; gravity=Gravity.CENTER },LinearLayout.LayoutParams(d(58),d(62)))
+        card.addView(TextView(this).apply { setImageResource(R.drawable.ic_shuffle); setColorFilter(orange); gravity=Gravity.CENTER; contentDescription="Rastgele radyo" },LinearLayout.LayoutParams(d(58),d(62)))
         val info=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; gravity=Gravity.CENTER_VERTICAL; layoutParams=LinearLayout.LayoutParams(0,-2,1f) }
         info.addView(TextView(this).apply { text="KEYFİME BIRAK"; textSize=16f; setTextColor(white); setTypeface(typeface,android.graphics.Typeface.BOLD); letterSpacing=0.04f })
-        info.addView(TextView(this).apply { text="Bugün seçimi sana yaptırmıyorum."; textSize=11f; setTextColor(Color.rgb(204,166,136)) })
+        info.addView(TextView(this).apply { text="Ben bir frekans bulayım, kararı sen ver."; textSize=11f; setTextColor(Color.rgb(204,166,136)) })
         card.addView(info); card.addView(TextView(this).apply { text="›"; textSize=30f; setTextColor(orange); gravity=Gravity.CENTER },LinearLayout.LayoutParams(d(30),d(56))); return card
     }
 
@@ -600,7 +600,7 @@ class MainActivity : AppCompatActivity() {
         val previous=iconButton(R.drawable.ic_prev).apply{layoutParams=LinearLayout.LayoutParams(d(60),d(60))}
         val main=ImageButton(this).apply{setImageResource(if(controller?.isPlaying==true)R.drawable.ic_pause else R.drawable.ic_play);setColorFilter(white);background=GradientDrawable().apply{shape=GradientDrawable.OVAL;setColor(orange)};layoutParams=LinearLayout.LayoutParams(d(82),d(82)).apply{setMargins(d(20),0,d(20),0)}}
         val next=iconButton(R.drawable.ic_next).apply{layoutParams=LinearLayout.LayoutParams(d(60),d(60))}
-        fun refresh(){if(!dialog.isShowing||isFinishing||isDestroyed)return;val st=stations.getOrNull(currentIndex)?:return;stationName.text=st.name;logo.bind(st.name,st.genre,st.logoUrl);logo.setPlaying(controller?.isPlaying==true);favorite.setImageResource(if(isFavorite(st)) R.drawable.ic_heart else R.drawable.ic_heart_outline);favorite.setColorFilter(if(isFavorite(st))orange else white);track.text=nowPlaying.ifBlank{"CANLI • "+st.name};live.text=if(controller?.isPlaying==true)"●  CANLI YAYIN"else"YAYIN HAZIR";live.setTextColor(if(controller?.isPlaying==true)orange else muted);main.setImageResource(if(controller?.isPlaying==true)R.drawable.ic_pause else R.drawable.ic_play);bigSpectrum.setPlaying(controller?.isPlaying==true)}
+        fun refresh(){if(!dialog.isShowing||isFinishing||isDestroyed)return;val st=stations.getOrNull(currentIndex)?:return;stationName.text=st.name;logo.bind(st.name,st.genre,st.logoUrl);logo.setPlaying(controller?.isPlaying==true);favorite.setImageResource(if(isFavorite(st)) R.drawable.ic_heart else R.drawable.ic_heart_outline);favorite.setColorFilter(if(isFavorite(st))orange else white);track.text=if(nowPlaying.isNotBlank()) nowPlaying else "Canlı yayın";live.text=if(controller?.isPlaying==true)"●  CANLI YAYIN"else"YAYIN HAZIR";live.setTextColor(if(controller?.isPlaying==true)orange else muted);main.setImageResource(if(controller?.isPlaying==true)R.drawable.ic_pause else R.drawable.ic_play);bigSpectrum.setPlaying(controller?.isPlaying==true)}
         fullPlayerRefresh={refresh()}
         favorite.setOnClickListener{val st=stations.getOrNull(currentIndex)?:return@setOnClickListener;toggleFavorite(st)}
         main.setOnClickListener{togglePlay()}
