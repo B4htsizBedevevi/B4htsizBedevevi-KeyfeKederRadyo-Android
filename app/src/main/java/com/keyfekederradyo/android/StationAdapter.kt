@@ -60,7 +60,7 @@ class StationAdapter(
             layoutParams = LinearLayout.LayoutParams(38.dp(context),38.dp(context)); contentDescription = "Favorilere ekle"
         }
         top.addView(badgeView); top.addView(favoriteView)
-        val logoView = ImageView(context).apply {
+        val logoView = StationArtworkView(context).apply {
             scaleType = ImageView.ScaleType.CENTER_CROP
             background = GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(Color.rgb(48,48,52)); setStroke(1.dp(context), Color.rgb(75,75,80)) }
             clipToOutline = true; layoutParams = LinearLayout.LayoutParams(84.dp(context),84.dp(context)).apply { bottomMargin = 6.dp(context) }
@@ -86,7 +86,7 @@ class StationAdapter(
         val active = station.resolvedUrl == playingUrl
         val context = holder.itemView.context
         holder.logoView.contentDescription = station.name
-        StationImageLoader.load(holder.logoView, station.logoUrl, R.drawable.keyfe_keder_brand)
+        holder.logoView.bind(station.name, station.genre)
         holder.titleView.text = station.name
         holder.metaView.text = listOf(station.genre, station.country, station.language).filter { it.isNotBlank() }.distinct().joinToString(" • ").ifBlank { "Canlı radyo" }
         val favorite = isFavorite(station)
@@ -150,7 +150,7 @@ class StationAdapter(
 
     override fun getItemCount() = items.size
 
-    class Holder(view: View, val logoView: ImageView, val titleView: TextView, val metaView: TextView, val badgeView: TextView, val favoriteView: ImageButton, val liveView: TextView) : RecyclerView.ViewHolder(view) {
+    class Holder(view: View, val logoView: StationArtworkView, val titleView: TextView, val metaView: TextView, val badgeView: TextView, val favoriteView: ImageButton, val liveView: TextView) : RecyclerView.ViewHolder(view) {
         var logoAnimator: ValueAnimator? = null
     }
 }
