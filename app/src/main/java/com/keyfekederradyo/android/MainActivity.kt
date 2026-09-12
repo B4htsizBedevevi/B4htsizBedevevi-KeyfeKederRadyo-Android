@@ -509,7 +509,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun syncCurrentStation(){
         val p=controller?:return;val item=p.currentMediaItem?:return;val index=stations.indexOfFirst{it.resolvedUrl==item.mediaId}
-        if(index>=0){currentIndex=index;title.text=stations[index].name;miniLogo.bind(stations[index].name,stations[index].genre,stations[index].logoUrl);miniLogo.setPlaying(p.isPlaying)}
+        if(index>=0){currentIndex=index;title.text=stations[index].name;miniLogo.bind(stations[index].name,stations[index].genre,stations[index].logoUrl);miniLogo.setPlaying(p.isPlaying);spectrum.setStationSeed(stations[index].name.hashCode())}
         play.setImageResource(if(p.isPlaying)R.drawable.ic_pause else R.drawable.ic_play);spectrum.setPlaying(p.isPlaying);fullPlayerRefresh?.invoke()
     }
     private fun togglePlay(){controller?.let{if(it.isPlaying)it.pause()else it.play()}}
@@ -521,7 +521,7 @@ class MainActivity : AppCompatActivity() {
         val metadata=androidx.media3.common.MediaMetadata.Builder().setTitle(station.name).setArtist("Keyfe Keder Radyo").setAlbumTitle("Canlı Yayın").setArtworkUri(Uri.parse("android.resource://$packageName/drawable/station_artwork_default")).build()
         val item=MediaItem.Builder().setMediaId(station.resolvedUrl).setUri(station.resolvedUrl).setMediaMetadata(metadata).build()
         try{controller?.setMediaItem(item);controller?.prepare();controller?.play()}catch(_:Exception){status.text="Yayın başlatılamadı";return}
-        title.text=station.name;nowPlaying="";status.text="Bağlanıyor...";liveBadge.text="BAĞLANIYOR";liveBadge.setTextColor(orange);miniLogo.bind(station.name,station.genre,station.logoUrl);miniLogo.setPlaying(true);spectrum.restart();fullPlayerRefresh?.invoke()
+        title.text=station.name;nowPlaying="";status.text="Bağlanıyor...";liveBadge.text="BAĞLANIYOR";liveBadge.setTextColor(orange);miniLogo.bind(station.name,station.genre,station.logoUrl);miniLogo.setPlaying(true);spectrum.setStationSeed(station.name.hashCode());spectrum.restart();fullPlayerRefresh?.invoke()
     }
     private fun filter(query:String){val q=query.trim();val list=if(q.isBlank())stations else stations.filter{it.name.contains(q,true)||it.genre.contains(q,true)||it.country.contains(q,true)||it.language.contains(q,true)};if(selectedNav==0){showRadios(list);selectNav(1)}else adapter.submitList(list)}
     private fun loadStations(){executor.execute{try{val loaded=StationRepository().load();runOnUiThread{if(isFinishing||isDestroyed)return@runOnUiThread;stations=loaded;adapter.submitList(loaded);if(selectedNav==0)buildHome();syncCurrentStation()}}catch(_:Exception){runOnUiThread{if(!isFinishing&&!isDestroyed)status.text="Radyolar yüklenemedi"}}}}
@@ -559,7 +559,7 @@ class MainActivity : AppCompatActivity() {
         top.addView(close,LinearLayout.LayoutParams(d(54),d(48)))
         top.addView(TextView(this).apply{text="ŞİMDİ ÇALIYOR";textSize=10f;setTextColor(orange);gravity=Gravity.CENTER;background=rounded(Color.rgb(43,28,20),16);letterSpacing=0.06f},LinearLayout.LayoutParams(-2,d(30)).apply{gravity=Gravity.CENTER})
         top.addView(View(this),LinearLayout.LayoutParams(0,1,1f))
-        val favorite=ImageButton(this).apply{setImageResource(R.drawable.ic_heart);setColorFilter(if(isFavorite(initial))orange else white);setBackgroundColor(Color.TRANSPARENT)}
+        val favorite=ImageButton(this).apply{setImageResource(if(isFavorite(initial)) R.drawable.ic_heart else R.drawable.ic_heart_outline);setColorFilter(if(isFavorite(initial))orange else white);setBackgroundColor(Color.TRANSPARENT)}
         top.addView(favorite,LinearLayout.LayoutParams(d(48),d(48)));root.addView(top,LinearLayout.LayoutParams(-1,d(48)))
         val frame=FrameLayout(this).apply{layoutParams=LinearLayout.LayoutParams(d(226),d(226)).apply{topMargin=d(8);bottomMargin=d(18)};background=GradientDrawable().apply{shape=GradientDrawable.OVAL;setColor(Color.rgb(22,22,24));setStroke(d(2),Color.rgb(92,48,22))};elevation=d(5).toFloat()}
         val logo=StationArtworkView(this).apply{background=rounded(Color.rgb(24,24,25),24);bind(initial.name,initial.genre,initial.logoUrl);setPlaying(controller?.isPlaying==true)}
@@ -572,7 +572,7 @@ class MainActivity : AppCompatActivity() {
         val previous=iconButton(R.drawable.ic_prev).apply{layoutParams=LinearLayout.LayoutParams(d(60),d(60))}
         val main=ImageButton(this).apply{setImageResource(if(controller?.isPlaying==true)R.drawable.ic_pause else R.drawable.ic_play);setColorFilter(white);background=GradientDrawable().apply{shape=GradientDrawable.OVAL;setColor(orange)};layoutParams=LinearLayout.LayoutParams(d(82),d(82)).apply{setMargins(d(20),0,d(20),0)}}
         val next=iconButton(R.drawable.ic_next).apply{layoutParams=LinearLayout.LayoutParams(d(60),d(60))}
-        fun refresh(){if(!dialog.isShowing||isFinishing||isDestroyed)return;val st=stations.getOrNull(currentIndex)?:return;stationName.text=st.name;logo.bind(st.name,st.genre,st.logoUrl);logo.setPlaying(controller?.isPlaying==true);favorite.setColorFilter(if(isFavorite(st))orange else white);track.text=nowPlaying.ifBlank{"CANLI • "+st.name};live.text=if(controller?.isPlaying==true)"●  CANLI YAYIN"else"YAYIN HAZIR";live.setTextColor(if(controller?.isPlaying==true)orange else muted);main.setImageResource(if(controller?.isPlaying==true)R.drawable.ic_pause else R.drawable.ic_play);bigSpectrum.setPlaying(controller?.isPlaying==true)}
+        fun refresh(){if(!dialog.isShowing||isFinishing||isDestroyed)return;val st=stations.getOrNull(currentIndex)?:return;stationName.text=st.name;logo.bind(st.name,st.genre,st.logoUrl);logo.setPlaying(controller?.isPlaying==true);favorite.setImageResource(if(isFavorite(st)) R.drawable.ic_heart else R.drawable.ic_heart_outline);favorite.setColorFilter(if(isFavorite(st))orange else white);track.text=nowPlaying.ifBlank{"CANLI • "+st.name};live.text=if(controller?.isPlaying==true)"●  CANLI YAYIN"else"YAYIN HAZIR";live.setTextColor(if(controller?.isPlaying==true)orange else muted);main.setImageResource(if(controller?.isPlaying==true)R.drawable.ic_pause else R.drawable.ic_play);bigSpectrum.setPlaying(controller?.isPlaying==true)}
         fullPlayerRefresh={refresh()}
         favorite.setOnClickListener{val st=stations.getOrNull(currentIndex)?:return@setOnClickListener;toggleFavorite(st)}
         main.setOnClickListener{togglePlay()}
