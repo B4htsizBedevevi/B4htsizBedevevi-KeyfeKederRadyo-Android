@@ -30,6 +30,12 @@ class AudioSpectrumView @JvmOverloads constructor(
         if (active) postInvalidateOnAnimation()
     }
 
+    fun restart() {
+        phase = 0f
+        invalidate()
+        if (active) postInvalidateOnAnimation()
+    }
+
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
         attached = true
