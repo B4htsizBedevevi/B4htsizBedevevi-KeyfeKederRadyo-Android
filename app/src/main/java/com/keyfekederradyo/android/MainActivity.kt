@@ -16,7 +16,6 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
-import android.widget.Toast
 import android.widget.ScrollView
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
@@ -82,7 +81,14 @@ class MainActivity : AppCompatActivity() {
         setContentView(ui)
         ui.animate().alpha(1f).translationY(0f).setStartDelay(120).setDuration(500).setInterpolator(DecelerateInterpolator()).start()
         taglineHandler.postDelayed(taglineRunnable, 1800)
-        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) { override fun handleOnBackPressed() { if (search.visibility == View.VISIBLE) { search.visibility = View.GONE; search.clearFocus() } else finish() } })
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (search.visibility == View.VISIBLE) {
+                    search.visibility = View.GONE
+                    search.clearFocus()
+                } else finish()
+            }
+        })
         connectPlayer()
         loadStations()
     }
@@ -97,7 +103,7 @@ class MainActivity : AppCompatActivity() {
         brandBox.addView(brand, LinearLayout.LayoutParams(-1, 31.dp())); brandBox.addView(tagline, LinearLayout.LayoutParams(-1, 22.dp()))
         val tools = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
         val searchButton = button(R.drawable.ic_search)
-        liveBadge = TextView(this).apply { text = "● CANLI"; textSize = 10f; setTextColor(orange); gravity = Gravity.CENTER; setPadding(8.dp(), 0, 8.dp(), 0); background = GradientDrawable().apply { setColor(Color.rgb(45, 27, 15)); setStroke(1.dp(), Color.rgb(110, 62, 20)); cornerRadius = 14.dp().toFloat() }; layoutParams = LinearLayout.LayoutParams(64.dp(), 30.dp()).apply { leftMargin = 2.dp() } }
+        liveBadge = TextView(this).apply { text = "RADYO"; textSize = 10f; setTextColor(muted); gravity = Gravity.CENTER; setPadding(8.dp(), 0, 8.dp(), 0); background = GradientDrawable().apply { setColor(Color.rgb(28, 24, 21)); setStroke(1.dp(), Color.rgb(80, 55, 30)); cornerRadius = 14.dp().toFloat() }; layoutParams = LinearLayout.LayoutParams(64.dp(), 30.dp()).apply { leftMargin = 2.dp() } }
         tools.addView(searchButton); tools.addView(liveBadge); top.addView(menu); top.addView(brandBox); top.addView(tools); root.addView(top)
 
         val tabs = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL; setPadding(10.dp(), 0, 10.dp(), 0); background = rounded(surface, 18) }
@@ -168,16 +174,17 @@ class MainActivity : AppCompatActivity() {
         root.addView(name, LinearLayout.LayoutParams(-1, 48.dp()))
         val track = TextView(this).apply { text = status.text; textSize = 13f; setTextColor(muted); gravity = Gravity.CENTER; maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END }
         root.addView(track, LinearLayout.LayoutParams(-1, 28.dp()))
-        root.addView(TextView(this).apply { text = if (controller?.isPlaying == true) "●  CANLI" else "●  HAZIR"; textSize = 12f; setTextColor(orange); gravity = Gravity.CENTER }, LinearLayout.LayoutParams(-1, 28.dp()))
+        val live = TextView(this).apply { text = if (controller?.isPlaying == true) "●  CANLI" else "●  HAZIR"; textSize = 12f; setTextColor(orange); gravity = Gravity.CENTER }
+        root.addView(live, LinearLayout.LayoutParams(-1, 28.dp()))
         val bigSpectrum = AudioSpectrumView(this).apply { setPlaying(controller?.isPlaying == true) }
         root.addView(bigSpectrum, LinearLayout.LayoutParams(-1, 40.dp()).apply { setMargins(18.dp(), 6.dp(), 18.dp(), 10.dp()) })
         val controls = LinearLayout(this).apply { gravity = Gravity.CENTER; orientation = LinearLayout.HORIZONTAL }
         val previous = button(R.drawable.ic_prev)
         val main = button(if (controller?.isPlaying == true) R.drawable.ic_pause else R.drawable.ic_play).apply { background = GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(orange) }; setPadding(20.dp(), 20.dp(), 20.dp(), 20.dp()); layoutParams = LinearLayout.LayoutParams(74.dp(), 74.dp()).apply { setMargins(18.dp(), 0, 18.dp(), 0) } }
         val next = button(R.drawable.ic_next)
-        previous.setOnClickListener { playRelative(-1); name.text = title.text; track.text = status.text; if (currentIndex in stations.indices) StationImageLoader.load(logo, stations[currentIndex].logoUrl, R.drawable.ic_keyfe_keder_logo) }
-        next.setOnClickListener { playRelative(1); name.text = title.text; track.text = status.text; if (currentIndex in stations.indices) StationImageLoader.load(logo, stations[currentIndex].logoUrl, R.drawable.ic_keyfe_keder_logo) }
-        main.setOnClickListener { controller?.let { if (it.isPlaying) it.pause() else it.play() }; main.setImageResource(if (controller?.isPlaying == true) R.drawable.ic_pause else R.drawable.ic_play); bigSpectrum.setPlaying(controller?.isPlaying == true) }
+        previous.setOnClickListener { playRelative(-1); name.text = title.text; track.text = status.text; live.text = if (controller?.isPlaying == true) "●  CANLI" else "●  HAZIR"; if (currentIndex in stations.indices) StationImageLoader.load(logo, stations[currentIndex].logoUrl, R.drawable.ic_keyfe_keder_logo) }
+        next.setOnClickListener { playRelative(1); name.text = title.text; track.text = status.text; live.text = if (controller?.isPlaying == true) "●  CANLI" else "●  HAZIR"; if (currentIndex in stations.indices) StationImageLoader.load(logo, stations[currentIndex].logoUrl, R.drawable.ic_keyfe_keder_logo) }
+        main.setOnClickListener { controller?.let { if (it.isPlaying) it.pause() else it.play() }; main.setImageResource(if (controller?.isPlaying == true) R.drawable.ic_pause else R.drawable.ic_play); live.text = if (controller?.isPlaying == true) "●  CANLI" else "●  HAZIR"; bigSpectrum.setPlaying(controller?.isPlaying == true) }
         controls.addView(previous); controls.addView(main); controls.addView(next); root.addView(controls)
         root.addView(TextView(this).apply { text = if (currentIndex >= 0 && isFavorite(stations[currentIndex])) "♥  Favorilerde" else "♡  Favorilere ekle"; textSize = 14f; setTextColor(white); gravity = Gravity.CENTER; setPadding(0, 12.dp(), 0, 0); setOnClickListener { if (currentIndex >= 0) { toggleFavorite(stations[currentIndex]); text = if (isFavorite(stations[currentIndex])) "♥  Favorilerde" else "♡  Favorilere ekle" } } }, LinearLayout.LayoutParams(-1, 42.dp()))
         scroll.addView(root); dialog.setContentView(scroll); dialog.window?.setBackgroundDrawableResource(android.R.color.transparent); dialog.show(); dialog.window?.setLayout(-1, (resources.displayMetrics.heightPixels * 0.88f).toInt())
@@ -197,20 +204,24 @@ class MainActivity : AppCompatActivity() {
                         val playing = p.isPlaying
                         when {
                             p.playbackState == androidx.media3.common.Player.STATE_BUFFERING -> status.text = "Bağlanıyor..."
-                            playing && status.text == "Hazır" -> status.text = "Canlı"
-                            !playing && status.text == "Canlı" -> status.text = "Durduruldu"
+                            playing -> status.text = "Canlı"
+                            p.playbackState == androidx.media3.common.Player.STATE_READY -> status.text = "Durduruldu"
                         }
                         play.setImageResource(if (playing) R.drawable.ic_pause else R.drawable.ic_play)
                         spectrum.setPlaying(playing)
-                        liveBadge.text = if (playing) "● CANLI" else "RADYO"
-                        liveBadge.setTextColor(if (playing) orange else muted)
+                        liveBadge.text = when {
+                            playing -> "● CANLI"
+                            p.playbackState == androidx.media3.common.Player.STATE_BUFFERING -> "BAĞLANIYOR"
+                            else -> "RADYO"
+                        }
+                        liveBadge.setTextColor(if (playing || p.playbackState == androidx.media3.common.Player.STATE_BUFFERING) orange else muted)
                     }
                     override fun onIsPlayingChanged(isPlaying: Boolean) = refresh()
                     override fun onPlaybackStateChanged(playbackState: Int) = refresh()
                     override fun onMediaItemTransition(item: MediaItem?, reason: Int) { title.text = item?.mediaMetadata?.title ?: "Bir radyo seç"; refresh() }
                     override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
                         val artist = mediaMetadata.artist?.toString().orEmpty()
-                        if (artist.isNotBlank() && artist != "Keyfe Keder Radyo") status.text = artist
+                        if (artist.isNotBlank() && artist != "Keyfe Keder Radyo" && artist != "Canlı Yayın") status.text = artist
                     }
                     override fun onMetadata(metadata: Metadata) {
                         for (i in 0 until metadata.length()) {
@@ -241,18 +252,42 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun loadStations() { executor.execute { try { val loaded = StationRepository().load(); runOnUiThread { stations = loaded; adapter.submitList(loaded); findViewById<View>(android.R.id.content).findViewWithTag<View>("loader")?.visibility = View.GONE } } catch (e: Exception) { runOnUiThread { status.text = "Radyolar yüklenemedi"; Toast.makeText(this, e.message ?: "Bağlantı hatası", Toast.LENGTH_LONG).show() } } } }
-    private fun play(s: Station) { currentIndex = stations.indexOfFirst { it.resolvedUrl == s.resolvedUrl }.coerceAtLeast(0); val item = MediaItem.Builder().setMediaId(s.resolvedUrl).setUri(s.resolvedUrl).setMediaMetadata(MediaMetadata.Builder().setTitle(s.name).setArtist("Keyfe Keder Radyo").setAlbumTitle("Canlı Yayın").setArtworkUri(Uri.parse("android.resource://$packageName/drawable/ic_keyfe_keder_logo")).setExtras(android.os.Bundle().apply { putString("fallback_url", s.url) }).build()).build(); controller?.setMediaItem(item); controller?.prepare(); controller?.play(); title.text = s.name; status.text = "Bağlanıyor..."; liveBadge.text = "BAĞLANIYOR"; liveBadge.setTextColor(orange); animateTap(mini) }
+    private fun loadStations() {
+        executor.execute {
+            try {
+                val loaded = StationRepository().load()
+                runOnUiThread {
+                    stations = loaded
+                    adapter.submitList(loaded)
+                    findViewById<View>(android.R.id.content).findViewWithTag<View>("loader")?.visibility = View.GONE
+                }
+            } catch (_: Exception) {
+                runOnUiThread { status.text = "Radyolar yüklenemedi"; findViewById<View>(android.R.id.content).findViewWithTag<View>("loader")?.visibility = View.GONE }
+            }
+        }
+    }
+
+    private fun play(s: Station) {
+        currentIndex = stations.indexOfFirst { it.resolvedUrl == s.resolvedUrl }.coerceAtLeast(0)
+        val item = MediaItem.Builder().setMediaId(s.resolvedUrl).setUri(s.resolvedUrl).setMediaMetadata(MediaMetadata.Builder().setTitle(s.name).setArtist("Keyfe Keder Radyo").setAlbumTitle("Canlı Yayın").setArtworkUri(Uri.parse("android.resource://$packageName/drawable/ic_keyfe_keder_logo")).setExtras(android.os.Bundle().apply { putString("fallback_url", s.url) }).build()).build()
+        controller?.setMediaItem(item); controller?.prepare(); controller?.play()
+        title.text = s.name; status.text = "Bağlanıyor..."; liveBadge.text = "BAĞLANIYOR"; liveBadge.setTextColor(orange)
+        StationImageLoader.load(miniLogo, s.logoUrl, R.drawable.ic_keyfe_keder_logo)
+        animateTap(mini)
+    }
+
     private fun filter(q: String) { val x = q.trim().lowercase(); adapter.submitList(if (x.isBlank()) stations else stations.filter { it.name.lowercase().contains(x) || it.genre.lowercase().contains(x) || it.country.lowercase().contains(x) }) }
     private fun showFavorites() { adapter.submitList(stations.filter { isFavorite(it) }) }
 
     private fun showCategories() {
         val genres = stations.flatMap { it.genre.split(",", ";") }.map { it.trim() }.filter { it.isNotBlank() }.distinct().sorted()
-        val dialog = android.app.Dialog(this); val root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(22.dp(), 20.dp(), 22.dp(), 20.dp()); background = rounded(Color.rgb(24,24,26), 28) }
+        val dialog = android.app.Dialog(this)
+        val scroll = ScrollView(this).apply { overScrollMode = View.OVER_SCROLL_NEVER }
+        val root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(22.dp(), 20.dp(), 22.dp(), 20.dp()); background = rounded(Color.rgb(24,24,26), 28) }
         root.addView(TextView(this).apply { text = "Kategoriler"; textSize = 23f; setTextColor(white); setTypeface(typeface, android.graphics.Typeface.BOLD) }, LinearLayout.LayoutParams(-1, 42.dp()))
         genres.forEach { genre -> root.addView(TextView(this).apply { text = genre; textSize = 15f; setTextColor(white); gravity = Gravity.CENTER_VERTICAL; setPadding(16.dp(),0,16.dp(),0); background = rounded(surface2,18); setOnClickListener { adapter.submitList(stations.filter { it.genre.contains(genre, ignoreCase = true) }); dialog.dismiss() } }, LinearLayout.LayoutParams(-1,48.dp()).apply { bottomMargin=8.dp() }) }
         root.addView(TextView(this).apply { text="Tüm radyolar"; textSize=14f; setTextColor(orange); gravity=Gravity.CENTER; setOnClickListener { adapter.submitList(stations); dialog.dismiss() } }, LinearLayout.LayoutParams(-1,44.dp()))
-        dialog.setContentView(root); dialog.window?.setBackgroundDrawableResource(android.R.color.transparent); dialog.show(); dialog.window?.setLayout(-1,-2)
+        scroll.addView(root); dialog.setContentView(scroll); dialog.window?.setBackgroundDrawableResource(android.R.color.transparent); dialog.show(); dialog.window?.setLayout(-1, (resources.displayMetrics.heightPixels * 0.82f).toInt())
     }
 
     private fun showSettings() {
