@@ -29,12 +29,6 @@ class RadioPlaybackService : MediaSessionService() {
     override fun onCreate() {
         super.onCreate()
 
-        setMediaNotificationProvider(
-            DefaultMediaNotificationProvider(this).apply {
-                setSmallIcon(R.drawable.media3_notification_small_icon)
-            }
-        )
-
         val attrs = AudioAttributes.Builder()
             .setUsage(C.USAGE_MEDIA)
             .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
