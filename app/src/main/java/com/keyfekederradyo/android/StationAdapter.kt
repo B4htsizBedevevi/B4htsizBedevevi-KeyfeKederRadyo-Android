@@ -27,76 +27,83 @@ class StationAdapter(
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): Holder {
         val context = parent.context
-        val row = LinearLayout(context).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            setPadding(14.dp(context), 8.dp(context), 8.dp(context), 8.dp(context))
-            layoutParams = RecyclerView.LayoutParams(-1, 82.dp(context)).apply {
-                leftMargin = 10.dp(context)
-                rightMargin = 10.dp(context)
-                bottomMargin = 7.dp(context)
+        val card = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_HORIZONTAL
+            setPadding(10.dp(context), 10.dp(context), 10.dp(context), 8.dp(context))
+            layoutParams = RecyclerView.LayoutParams(-1, 190.dp(context)).apply {
+                leftMargin = 5.dp(context)
+                rightMargin = 5.dp(context)
+                bottomMargin = 10.dp(context)
             }
             background = GradientDrawable().apply {
                 setColor(Color.rgb(27, 27, 29))
-                cornerRadius = 20.dp(context).toFloat()
-                setStroke(1.dp(context), Color.rgb(46, 46, 49))
+                cornerRadius = 22.dp(context).toFloat()
+                setStroke(1.dp(context), Color.rgb(48, 48, 51))
             }
             isClickable = true
             isFocusable = true
+            elevation = 2.dp(context).toFloat()
         }
+
+        val top = LinearLayout(context).apply {
+            gravity = Gravity.TOP
+            layoutParams = LinearLayout.LayoutParams(-1, 32.dp(context))
+        }
+        val badgeView = TextView(context).apply {
+            textSize = 8.5f
+            setTextColor(Color.rgb(255, 122, 0))
+            gravity = Gravity.CENTER_VERTICAL
+            visibility = View.GONE
+            setTypeface(typeface, Typeface.BOLD)
+            layoutParams = LinearLayout.LayoutParams(0, -1, 1f)
+        }
+        val favoriteView = ImageButton(context).apply {
+            setBackgroundColor(Color.TRANSPARENT)
+            setPadding(5.dp(context), 5.dp(context), 5.dp(context), 5.dp(context))
+            scaleType = ImageView.ScaleType.CENTER_INSIDE
+            layoutParams = LinearLayout.LayoutParams(38.dp(context), 38.dp(context))
+            contentDescription = "Favorilere ekle"
+        }
+        top.addView(badgeView)
+        top.addView(favoriteView)
 
         val logoView = ImageView(context).apply {
             scaleType = ImageView.ScaleType.CENTER_CROP
             background = GradientDrawable().apply {
                 shape = GradientDrawable.OVAL
                 setColor(Color.rgb(48, 48, 52))
-                setStroke(1.dp(context), Color.rgb(78, 78, 82))
+                setStroke(1.dp(context), Color.rgb(75, 75, 80))
             }
             clipToOutline = true
-            layoutParams = LinearLayout.LayoutParams(56.dp(context), 56.dp(context)).apply {
-                rightMargin = 13.dp(context)
+            layoutParams = LinearLayout.LayoutParams(82.dp(context), 82.dp(context)).apply {
+                bottomMargin = 7.dp(context)
             }
         }
 
-        val infoLayout = LinearLayout(context).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER_VERTICAL
-            layoutParams = LinearLayout.LayoutParams(0, -1, 1f)
-        }
         val titleView = TextView(context).apply {
-            textSize = 16f
+            textSize = 14.5f
             setTextColor(Color.rgb(245, 245, 247))
             typeface = Typeface.DEFAULT_BOLD
+            gravity = Gravity.CENTER
             maxLines = 1
             ellipsize = android.text.TextUtils.TruncateAt.END
+            layoutParams = LinearLayout.LayoutParams(-1, 25.dp(context))
         }
         val metaView = TextView(context).apply {
-            textSize = 11.5f
+            textSize = 10f
             setTextColor(Color.rgb(145, 145, 150))
+            gravity = Gravity.CENTER
             maxLines = 1
             ellipsize = android.text.TextUtils.TruncateAt.END
-        }
-        val badgeView = TextView(context).apply {
-            textSize = 9.5f
-            setTextColor(Color.rgb(255, 122, 0))
-            visibility = View.GONE
-        }
-        infoLayout.addView(titleView, LinearLayout.LayoutParams(-1, 27.dp(context)))
-        infoLayout.addView(metaView, LinearLayout.LayoutParams(-1, 22.dp(context)))
-        infoLayout.addView(badgeView, LinearLayout.LayoutParams(-1, 18.dp(context)))
-
-        val favoriteView = ImageButton(context).apply {
-            setBackgroundColor(Color.TRANSPARENT)
-            setPadding(8.dp(context), 8.dp(context), 8.dp(context), 8.dp(context))
-            scaleType = ImageView.ScaleType.CENTER_INSIDE
-            layoutParams = LinearLayout.LayoutParams(42.dp(context), 42.dp(context))
-            contentDescription = "Favorilere ekle"
+            layoutParams = LinearLayout.LayoutParams(-1, 20.dp(context))
         }
 
-        row.addView(logoView)
-        row.addView(infoLayout)
-        row.addView(favoriteView)
-        return Holder(row, logoView, titleView, metaView, badgeView, favoriteView)
+        card.addView(top)
+        card.addView(logoView)
+        card.addView(titleView)
+        card.addView(metaView)
+        return Holder(card, logoView, titleView, metaView, badgeView, favoriteView)
     }
 
     override fun onBindViewHolder(holder: Holder, position: Int) {
@@ -122,17 +129,34 @@ class StationAdapter(
         holder.favoriteView.contentDescription = if (favorite) "Favorilerden çıkar" else "Favorilere ekle"
 
         holder.itemView.setOnClickListener {
-            holder.itemView.animate().scaleX(.985f).scaleY(.985f).setDuration(70)
-                .withEndAction { holder.itemView.animate().scaleX(1f).scaleY(1f).setDuration(120).start() }.start()
-            onClick(station)
+            holder.itemView.animate()
+                .scaleX(.94f).scaleY(.94f).setDuration(75)
+                .withEndAction {
+                    holder.itemView.animate().scaleX(1f).scaleY(1f).setDuration(180).start()
+                    onClick(station)
+                }.start()
         }
 
         holder.favoriteView.setOnClickListener {
-            holder.favoriteView.animate().scaleX(.84f).scaleY(.84f).setDuration(80)
-                .withEndAction { holder.favoriteView.animate().scaleX(1f).scaleY(1f).setDuration(130).start() }.start()
+            holder.favoriteView.animate().scaleX(.72f).scaleY(.72f).setDuration(80)
+                .withEndAction { holder.favoriteView.animate().scaleX(1f).scaleY(1f).setDuration(150).start() }.start()
             onFavorite(station)
-            notifyItemChanged(position)
+            notifyItemChanged(holder.bindingAdapterPosition)
         }
+
+        holder.itemView.alpha = 0f
+        holder.itemView.translationY = 12.dp(holder.itemView.context).toFloat()
+        holder.itemView.animate().alpha(1f).translationY(0f)
+            .setStartDelay((position.coerceAtMost(7) * 35L))
+            .setDuration(260)
+            .start()
+    }
+
+    override fun onViewRecycled(holder: Holder) {
+        holder.itemView.animate().cancel()
+        holder.itemView.alpha = 1f
+        holder.itemView.translationY = 0f
+        super.onViewRecycled(holder)
     }
 
     override fun getItemCount() = items.size
