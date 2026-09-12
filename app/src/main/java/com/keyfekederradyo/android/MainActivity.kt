@@ -439,6 +439,17 @@ class MainActivity : AppCompatActivity() {
             setOnClickListener{tap(this);play(station)}
         }
 
+        val glow=View(this).apply{
+            background=GradientDrawable().apply{
+                setColor(Color.rgb(49,28,17))
+                cornerRadius=d(28).toFloat()
+                setStroke(d(1),Color.rgb(103,61,31))
+            }
+            alpha=0.72f
+        }
+        card.addView(glow,FrameLayout.LayoutParams(-1,-1).apply{
+            leftMargin=d(4);rightMargin=d(4);topMargin=d(4);bottomMargin=d(-1)
+        })
         val artwork=StationArtworkView(this).apply{
             background=rounded(Color.rgb(18,18,19),22)
             clipToOutline=true
