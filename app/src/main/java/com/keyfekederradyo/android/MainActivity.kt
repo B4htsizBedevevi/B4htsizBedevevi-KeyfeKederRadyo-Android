@@ -183,9 +183,15 @@ class MainActivity : AppCompatActivity() {
 
         favorite.setOnClickListener{
             val st=stations.getOrNull(currentIndex)?:return@setOnClickListener
-            tap(this);toggleFavorite(st);setColorFilter(if(isFavorite(st))orange else white)
+            tap(it)
+            toggleFavorite(st)
+            (it as? ImageButton)?.setColorFilter(if(isFavorite(st))orange else white)
         }
-        main.setOnClickListener{tap(this);togglePlay();postDelayed({refreshStationVisuals()},100L)}
+        main.setOnClickListener{
+            tap(it)
+            togglePlay()
+            handler.postDelayed({refreshStationVisuals()},100L)
+        }
         previous.setOnClickListener{tap(it);playRelative(-1);refreshStationVisuals()}
         next.setOnClickListener{tap(it);playRelative(1);refreshStationVisuals()}
 
