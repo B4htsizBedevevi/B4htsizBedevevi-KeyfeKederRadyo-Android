@@ -1,5 +1,6 @@
 package com.keyfekederradyo.android
 
+import android.net.Uri
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONArray
@@ -29,11 +30,20 @@ class StationRepository {
             val o = array.optJSONObject(i) ?: continue
             val url = o.optString("url_resolved").ifBlank { o.optString("url") }
             if (o.optString("name").isBlank() || url.isBlank()) continue
+            val homepage = o.optString("homepage")
+            val host = runCatching { Uri.parse(homepage).host.orEmpty().removePrefix("www.") }.getOrDefault("")
+            val logoUrl = if (host.isNotBlank()) "https://icons.duckduckgo.com/ip3/$host.ico" else ""
             result += Station(
-                name = o.optString("name"), url = o.optString("url"), resolvedUrl = url,
-                genre = o.optString("genre"), language = o.optString("language"),
-                country = o.optString("country"), quality = o.optString("quality"),
-                song = o.optString("song").ifBlank { "Canlı yayın" }, homepage = o.optString("homepage")
+                name = o.optString("name"),
+                url = o.optString("url"),
+                resolvedUrl = url,
+                genre = o.optString("genre"),
+                language = o.optString("language"),
+                country = o.optString("country"),
+                quality = o.optString("quality"),
+                song = o.optString("song").ifBlank { "Canlı yayın" },
+                homepage = homepage,
+                logoUrl = logoUrl
             )
         }
         return result
