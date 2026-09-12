@@ -2,7 +2,7 @@ package com.keyfekederradyo.android
 
 import android.graphics.BitmapFactory
 import android.widget.ImageView
-import androidx.collection.LruCache
+import android.util.LruCache
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.concurrent.Executors
