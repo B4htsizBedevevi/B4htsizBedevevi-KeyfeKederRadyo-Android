@@ -82,18 +82,11 @@ class StationArtworkView(context: Context) : ImageView(context) {
             canvas.drawCircle(w*.72f,h*.27f,r*.10f,poster)
         }
 
-        val gx = .22f + ((seed % 55) / 100f)
-        val gy = .16f + (((seed / 17) % 45) / 100f)
-        glowPaint.shader = RadialGradient(w*gx,h*gy,r*(.48f+pulse*.34f),accent,0x00111111,Shader.TileMode.CLAMP)
-        canvas.drawCircle(w*gx,h*gy,r*(.48f+pulse*.34f),glowPaint)
-        glowPaint.shader = RadialGradient(w*(1f-gx*.55f),h*.88f,r*(.34f+pulse*.20f),accent,0x0009090A,Shader.TileMode.CLAMP)
-        canvas.drawCircle(w*(1f-gx*.55f),h*.88f,r*(.34f+pulse*.20f),glowPaint)
-
-        // Keep the logo clean: audio visualization belongs in the player, not on top of the artwork.
+        // Artwork is intentionally clean. Glow is rendered by the parent card/player.
         linePaint.style = Paint.Style.STROKE
-        linePaint.strokeWidth = maxOf(1.5f, w*.012f)
+        linePaint.strokeWidth = maxOf(1.5f,w*.010f)
         linePaint.color = accent
-        linePaint.alpha = (70 + pulse*90f).toInt()
+        linePaint.alpha = if(active) (55 + pulse*45f).toInt() else 48
         canvas.drawRoundRect(w*.08f,h*.08f,w*.92f,h*.92f,r*.16f,r*.16f,linePaint)
         if (active && width > 0 && height > 0) {
             phase += .085f
