@@ -7,6 +7,7 @@ import android.graphics.Paint
 import android.graphics.RadialGradient
 import android.graphics.Shader
 import android.widget.ImageView
+import android.graphics.Path
 import kotlin.math.min
 import kotlin.math.sin
 
@@ -27,7 +28,7 @@ class StationArtworkView(context: Context) : ImageView(context) {
         genre = genreValue.lowercase()
         logoUrl = artworkUrl
         seed = name.hashCode().ushr(1)
-        StationImageLoader.load(this, artworkUrl, R.drawable.keyfe_keder_brand)
+        if (artworkUrl.isBlank()) setImageDrawable(null) else StationImageLoader.load(this, artworkUrl, R.drawable.keyfe_keder_brand)
         invalidate()
     }
 
@@ -59,8 +60,26 @@ class StationArtworkView(context: Context) : ImageView(context) {
 
         // Keep the artwork readable while preserving the radio-app atmosphere.
         bgPaint.shader = null
-        bgPaint.color = 0x30000000
+        bgPaint.color = 0x26000000
         canvas.drawRect(0f,0f,w,h,bgPaint)
+
+        // Clean fallback poster when the station has no artwork URL.
+        if (logoUrl.isBlank()) {
+            val poster = Paint(Paint.ANTI_ALIAS_FLAG)
+            poster.color = 0xFF0B0B0E.toInt()
+            canvas.drawRoundRect(w*.04f,h*.04f,w*.96f,h*.96f,r*.16f,r*.16f,poster)
+            poster.style = Paint.Style.STROKE
+            poster.strokeWidth = maxOf(2f,w*.012f)
+            poster.color = accent
+            val p = Path()
+            p.moveTo(w*.15f,h*.63f)
+            p.cubicTo(w*.30f,h*.40f,w*.38f,h*.78f,w*.54f,h*.55f)
+            p.cubicTo(w*.66f,h*.38f,w*.76f,h*.67f,w*.88f,h*.44f)
+            canvas.drawPath(p,poster)
+            poster.style = Paint.Style.FILL
+            poster.color = accent
+            canvas.drawCircle(w*.72f,h*.27f,r*.10f,poster)
+        }
 
         val gx = .22f + ((seed % 55) / 100f)
         val gy = .16f + (((seed / 17) % 45) / 100f)
@@ -83,15 +102,16 @@ class StationArtworkView(context: Context) : ImageView(context) {
             canvas.drawLine(gap*(i+1),h*.82f,gap*(i+1),h*.82f-bh,linePaint)
         }
 
-        // Text is intentionally shown only when artwork is missing, so station logos stay clean.
+        // Subtle station label for generated fallback artwork only.
         if (logoUrl.isBlank()) {
             textPaint.textAlign=Paint.Align.CENTER
             textPaint.color=0xFFF5F5F7.toInt()
-            textPaint.textSize=w*.095f
+            textPaint.textSize=w*.075f
             textPaint.typeface=android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT,android.graphics.Typeface.BOLD)
-            canvas.drawText(label,cx,h*.50f,textPaint)
-            textPaint.color=0xB8FFFFFF.toInt(); textPaint.textSize=w*.048f
-            canvas.drawText(if(genre.isBlank()) "CANLI RADYO" else genre.uppercase().take(18),cx,h*.59f,textPaint)
+            canvas.drawText(label,cx,h*.58f,textPaint)
+            textPaint.color=0xA8FFFFFF.toInt()
+            textPaint.textSize=w*.038f
+            canvas.drawText(if(genre.isBlank()) "LIVE RADIO" else genre.uppercase().take(16),cx,h*.66f,textPaint)
         }
 
         linePaint.style=Paint.Style.FILL; linePaint.color=accent; linePaint.alpha=190
