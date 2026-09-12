@@ -259,18 +259,131 @@ class MainActivity : AppCompatActivity() {
 
     private fun showPickResult(station:Station,hasFavorites:Boolean) {
         if(isFinishing||isDestroyed)return
+
         val meta=listOf(station.genre,station.country).filter{it.isNotBlank()}.joinToString(" • ")
         val reason=if(isFavorite(station))"Favorilerinden sana bir seçim." else if(hasFavorites)"Favorilerine farklı bir alternatif." else "Daha önce sıkmadığın bir frekans."
-        val message=buildString { append(station.name); if(meta.isNotBlank())append("\n\n").append(meta); append("\n\n").append(reason) }
-        val dialog=AlertDialog.Builder(this).setTitle("BUGÜNÜN FREKANSI").setMessage(message).setNegativeButton("Kapat",null).setPositiveButton("ŞİMDİ DİNLE",null).setNeutralButton("BAŞKA BİR TANE",null).create()
-        dialog.setOnShowListener {
-            dialog.getButton(android.content.DialogInterface.BUTTON_POSITIVE).setTextColor(orange)
-            dialog.getButton(android.content.DialogInterface.BUTTON_POSITIVE).setOnClickListener { if(!isFinishing&&!isDestroyed){dialog.dismiss();play(station)} }
-            dialog.getButton(android.content.DialogInterface.BUTTON_NEGATIVE).setTextColor(muted)
-            dialog.getButton(android.content.DialogInterface.BUTTON_NEUTRAL).setTextColor(muted)
-            dialog.getButton(android.content.DialogInterface.BUTTON_NEUTRAL).setOnClickListener { if(!isFinishing&&!isDestroyed){dialog.dismiss();handler.postDelayed({pickForMe()},180L)} }
+
+        val dialog=android.app.Dialog(this)
+        dialog.window?.setDimAmount(.78f)
+
+        val root=LinearLayout(this).apply{
+            orientation=LinearLayout.VERTICAL
+            setPadding(d(18),d(12),d(18),d(18))
+            background=GradientDrawable().apply{
+                setColor(Color.rgb(20,20,22))
+                cornerRadii=floatArrayOf(
+                    d(28).toFloat(),d(28).toFloat(),
+                    d(28).toFloat(),d(28).toFloat(),
+                    d(0).toFloat(),d(0).toFloat(),
+                    d(0).toFloat(),d(0).toFloat()
+                )
+                setStroke(d(1),Color.rgb(66,46,34))
+            }
         }
+
+        val handle=View(this).apply{background=rounded(Color.rgb(88,78,72),3)}
+        root.addView(handle,LinearLayout.LayoutParams(d(48),d(5)).apply{gravity=Gravity.CENTER;bottomMargin=d(14)})
+
+        val title=TextView(this).apply{
+            text="BUGÜNÜN FREKANSI"
+            textSize=11f
+            setTextColor(orange)
+            typeface=android.graphics.Typeface.DEFAULT_BOLD
+            letterSpacing=.10f
+            gravity=Gravity.CENTER
+        }
+        root.addView(title,LinearLayout.LayoutParams(-1,d(30)))
+
+        val art=StationArtworkView(this).apply{
+            background=rounded(Color.rgb(14,14,16),24)
+            clipToOutline=true
+            bind(station.name,station.genre,station.logoUrl)
+        }
+        root.addView(art,LinearLayout.LayoutParams(d(190),d(150)).apply{
+            gravity=Gravity.CENTER
+            bottomMargin=d(12)
+        })
+
+        root.addView(TextView(this).apply{
+            text=station.name
+            textSize=22f
+            setTextColor(white)
+            gravity=Gravity.CENTER
+            setTypeface(typeface,android.graphics.Typeface.BOLD)
+            maxLines=2
+        },LinearLayout.LayoutParams(-1,d(54)))
+
+        root.addView(TextView(this).apply{
+            text=meta.ifBlank{"CANLI RADYO"}
+            textSize=11f
+            setTextColor(muted)
+            gravity=Gravity.CENTER
+        },LinearLayout.LayoutParams(-1,d(28)))
+
+        val reasonBox=LinearLayout(this).apply{
+            orientation=LinearLayout.HORIZONTAL
+            gravity=Gravity.CENTER_VERTICAL
+            setPadding(d(14),d(10),d(14),d(10))
+            background=rounded(Color.rgb(31,25,22),18)
+        }
+        reasonBox.addView(TextView(this).apply{
+            text="✦"
+            textSize=17f
+            setTextColor(orange)
+            gravity=Gravity.CENTER
+        },LinearLayout.LayoutParams(d(30),d(38)))
+        reasonBox.addView(TextView(this).apply{
+            text=reason
+            textSize=11f
+            setTextColor(Color.rgb(214,203,196))
+            maxLines=2
+        },LinearLayout.LayoutParams(0,d(44),1f))
+        root.addView(reasonBox,LinearLayout.LayoutParams(-1,d(64)).apply{bottomMargin=d(12)})
+
+        val listen=TextView(this).apply{
+            text="▶   ŞİMDİ DİNLE"
+            textSize=13f
+            setTextColor(Color.WHITE)
+            gravity=Gravity.CENTER
+            typeface=android.graphics.Typeface.DEFAULT_BOLD
+            background=GradientDrawable().apply{setColor(orange);cornerRadius=d(20).toFloat()}
+            isClickable=true
+            setOnClickListener{tap(this);dialog.dismiss();play(station)}
+        }
+        root.addView(listen,LinearLayout.LayoutParams(-1,d(52)).apply{bottomMargin=d(8)})
+
+        val secondary=LinearLayout(this).apply{gravity=Gravity.CENTER}
+        val another=TextView(this).apply{
+            text="🎲  BAŞKA BİR TANE"
+            textSize=11f
+            setTextColor(muted)
+            gravity=Gravity.CENTER
+            setPadding(d(16),0,d(16),0)
+            isClickable=true
+            setOnClickListener{
+                tap(this)
+                dialog.dismiss()
+                handler.postDelayed({if(!isFinishing&&!isDestroyed)pickForMe()},180L)
+            }
+        }
+        val close=TextView(this).apply{
+            text="KAPAT"
+            textSize=11f
+            setTextColor(muted)
+            gravity=Gravity.CENTER
+            setPadding(d(16),0,d(16),0)
+            isClickable=true
+            setOnClickListener{tap(this);dialog.dismiss()}
+        }
+        secondary.addView(another,LinearLayout.LayoutParams(0,d(44),1f))
+        secondary.addView(close,LinearLayout.LayoutParams(0,d(44),1f))
+        root.addView(secondary,LinearLayout.LayoutParams(-1,d(44)))
+
+        dialog.setContentView(root)
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialog.setCanceledOnTouchOutside(true)
         dialog.show()
+        dialog.window?.setLayout(-1,(resources.displayMetrics.heightPixels*.78f).toInt())
     }
 
     private fun buildDiscover(){ buildHome(); (homeContainer.getChildAt(0) as? TextView)?.text="Keşfet"; (homeContainer.getChildAt(1) as? TextView)?.text="Bugün hangi frekanstasın?" }
@@ -283,10 +396,80 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun homeCard(station:Station):View {
-        val card=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(d(10),d(10),d(10),d(10));background=rounded(surface2,22);setOnClickListener{tap(this);play(station)}}
-        val image=StationArtworkView(this).apply{background=rounded(Color.rgb(18,18,19),18);clipToOutline=true;bind(station.name,station.genre)};card.addView(image,LinearLayout.LayoutParams(-1,d(106)))
-        card.addView(TextView(this).apply{text=station.name;textSize=13f;setTextColor(white);setTypeface(typeface,android.graphics.Typeface.BOLD);maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END;setPadding(d(2),d(7),d(2),0)})
-        card.addView(TextView(this).apply{text=listOf(station.genre,station.country).filter{it.isNotBlank()}.joinToString(" • ").ifBlank{"Canlı radyo"};textSize=9.5f;setTextColor(muted);maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END});return card
+        val card=FrameLayout(this).apply {
+            background=GradientDrawable().apply{
+                setColor(surface2)
+                cornerRadius=d(24).toFloat()
+                setStroke(d(1),Color.rgb(52,45,41))
+            }
+            isClickable=true
+            isFocusable=true
+            elevation=d(4).toFloat()
+            setOnClickListener{tap(this);play(station)}
+        }
+
+        val artwork=StationArtworkView(this).apply{
+            background=rounded(Color.rgb(18,18,19),22)
+            clipToOutline=true
+            bind(station.name,station.genre,station.logoUrl)
+        }
+        card.addView(artwork,FrameLayout.LayoutParams(-1,-1))
+
+        val shade=View(this).apply{
+            background=android.graphics.drawable.GradientDrawable(
+                android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,
+                intArrayOf(0x00101012,0x10101012,0xE80B0B0D.toInt())
+            )
+            isClickable=false
+        }
+        card.addView(shade,FrameLayout.LayoutParams(-1,-1))
+
+        val top=LinearLayout(this).apply{
+            gravity=Gravity.TOP or Gravity.END
+            setPadding(d(10),d(9),d(10),0)
+        }
+        val favorite=TextView(this).apply{
+            text=if(isFavorite(station))"♥" else "♡"
+            textSize=19f
+            gravity=Gravity.CENTER
+            setTextColor(if(isFavorite(station))Color.rgb(255,111,111) else 0xEEFFFFFF.toInt())
+            background=rounded(0x660B0B0D,18)
+        }
+        top.addView(favorite,LinearLayout.LayoutParams(d(36),d(36)))
+        card.addView(top,FrameLayout.LayoutParams(-1,d(46)).apply{gravity=Gravity.TOP})
+
+        val bottom=LinearLayout(this).apply{
+            orientation=LinearLayout.VERTICAL
+            setPadding(d(13),0,d(13),d(12))
+        }
+        val live=TextView(this).apply{
+            text="●  CANLI"
+            textSize=9.5f
+            setTextColor(orange)
+            typeface=android.graphics.Typeface.DEFAULT_BOLD
+            visibility=if(station.resolvedUrl==controller?.currentMediaItem?.mediaId)View.VISIBLE else View.GONE
+        }
+        val name=TextView(this).apply{
+            text=station.name
+            textSize=15f
+            setTextColor(white)
+            setTypeface(typeface,android.graphics.Typeface.BOLD)
+            maxLines=1
+            ellipsize=android.text.TextUtils.TruncateAt.END
+        }
+        val meta=TextView(this).apply{
+            text=listOf(station.genre,station.country).filter{it.isNotBlank()}.joinToString(" • ").ifBlank{"Canlı radyo"}
+            textSize=10.5f
+            setTextColor(0xD0FFFFFF.toInt())
+            maxLines=1
+            ellipsize=android.text.TextUtils.TruncateAt.END
+        }
+        bottom.addView(live,LinearLayout.LayoutParams(-1,d(18)))
+        bottom.addView(name,LinearLayout.LayoutParams(-1,d(26)))
+        bottom.addView(meta,LinearLayout.LayoutParams(-1,d(20)))
+        card.addView(bottom,FrameLayout.LayoutParams(-1,d(70)).apply{gravity=Gravity.BOTTOM})
+
+        return card
     }
 
     private fun buildMiniPlayer():View {
@@ -326,7 +509,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun syncCurrentStation(){
         val p=controller?:return;val item=p.currentMediaItem?:return;val index=stations.indexOfFirst{it.resolvedUrl==item.mediaId}
-        if(index>=0){currentIndex=index;title.text=stations[index].name;miniLogo.bind(stations[index].name,stations[index].genre);miniLogo.setPlaying(p.isPlaying)}
+        if(index>=0){currentIndex=index;title.text=stations[index].name;miniLogo.bind(stations[index].name,stations[index].genre,stations[index].logoUrl);miniLogo.setPlaying(p.isPlaying)}
         play.setImageResource(if(p.isPlaying)R.drawable.ic_pause else R.drawable.ic_play);spectrum.setPlaying(p.isPlaying);fullPlayerRefresh?.invoke()
     }
     private fun togglePlay(){controller?.let{if(it.isPlaying)it.pause()else it.play()}}
@@ -338,7 +521,7 @@ class MainActivity : AppCompatActivity() {
         val metadata=androidx.media3.common.MediaMetadata.Builder().setTitle(station.name).setArtist("Keyfe Keder Radyo").setAlbumTitle("Canlı Yayın").setArtworkUri(Uri.parse("android.resource://$packageName/drawable/station_artwork_default")).build()
         val item=MediaItem.Builder().setMediaId(station.resolvedUrl).setUri(station.resolvedUrl).setMediaMetadata(metadata).build()
         try{controller?.setMediaItem(item);controller?.prepare();controller?.play()}catch(_:Exception){status.text="Yayın başlatılamadı";return}
-        title.text=station.name;nowPlaying="";status.text="Bağlanıyor...";liveBadge.text="BAĞLANIYOR";liveBadge.setTextColor(orange);miniLogo.bind(station.name,station.genre);miniLogo.setPlaying(true);spectrum.restart();fullPlayerRefresh?.invoke()
+        title.text=station.name;nowPlaying="";status.text="Bağlanıyor...";liveBadge.text="BAĞLANIYOR";liveBadge.setTextColor(orange);miniLogo.bind(station.name,station.genre,station.logoUrl);miniLogo.setPlaying(true);spectrum.restart();fullPlayerRefresh?.invoke()
     }
     private fun filter(query:String){val q=query.trim();val list=if(q.isBlank())stations else stations.filter{it.name.contains(q,true)||it.genre.contains(q,true)||it.country.contains(q,true)||it.language.contains(q,true)};if(selectedNav==0){showRadios(list);selectNav(1)}else adapter.submitList(list)}
     private fun loadStations(){executor.execute{try{val loaded=StationRepository().load();runOnUiThread{if(isFinishing||isDestroyed)return@runOnUiThread;stations=loaded;adapter.submitList(loaded);if(selectedNav==0)buildHome();syncCurrentStation()}}catch(_:Exception){runOnUiThread{if(!isFinishing&&!isDestroyed)status.text="Radyolar yüklenemedi"}}}}
@@ -379,7 +562,7 @@ class MainActivity : AppCompatActivity() {
         val favorite=ImageButton(this).apply{setImageResource(R.drawable.ic_heart);setColorFilter(if(isFavorite(initial))orange else white);setBackgroundColor(Color.TRANSPARENT)}
         top.addView(favorite,LinearLayout.LayoutParams(d(48),d(48)));root.addView(top,LinearLayout.LayoutParams(-1,d(48)))
         val frame=FrameLayout(this).apply{layoutParams=LinearLayout.LayoutParams(d(226),d(226)).apply{topMargin=d(8);bottomMargin=d(18)};background=GradientDrawable().apply{shape=GradientDrawable.OVAL;setColor(Color.rgb(22,22,24));setStroke(d(2),Color.rgb(92,48,22))};elevation=d(5).toFloat()}
-        val logo=StationArtworkView(this).apply{background=rounded(Color.rgb(24,24,25),24);bind(initial.name,initial.genre);setPlaying(controller?.isPlaying==true)}
+        val logo=StationArtworkView(this).apply{background=rounded(Color.rgb(24,24,25),24);bind(initial.name,initial.genre,initial.logoUrl);setPlaying(controller?.isPlaying==true)}
         frame.addView(logo,FrameLayout.LayoutParams(d(210),d(210)).apply{gravity=Gravity.CENTER});root.addView(frame)
         val stationName=TextView(this).apply{text=initial.name;textSize=25f;setTextColor(white);gravity=Gravity.CENTER;setTypeface(typeface,android.graphics.Typeface.BOLD);maxLines=2};root.addView(stationName,LinearLayout.LayoutParams(-1,d(58)))
         val live=TextView(this).apply{text="●  CANLI YAYIN";textSize=11f;setTextColor(orange);gravity=Gravity.CENTER;letterSpacing=0.08f};root.addView(live,LinearLayout.LayoutParams(-1,d(28)))
@@ -389,7 +572,7 @@ class MainActivity : AppCompatActivity() {
         val previous=iconButton(R.drawable.ic_prev).apply{layoutParams=LinearLayout.LayoutParams(d(60),d(60))}
         val main=ImageButton(this).apply{setImageResource(if(controller?.isPlaying==true)R.drawable.ic_pause else R.drawable.ic_play);setColorFilter(white);background=GradientDrawable().apply{shape=GradientDrawable.OVAL;setColor(orange)};layoutParams=LinearLayout.LayoutParams(d(82),d(82)).apply{setMargins(d(20),0,d(20),0)}}
         val next=iconButton(R.drawable.ic_next).apply{layoutParams=LinearLayout.LayoutParams(d(60),d(60))}
-        fun refresh(){if(!dialog.isShowing||isFinishing||isDestroyed)return;val st=stations.getOrNull(currentIndex)?:return;stationName.text=st.name;logo.bind(st.name,st.genre);logo.setPlaying(controller?.isPlaying==true);favorite.setColorFilter(if(isFavorite(st))orange else white);track.text=nowPlaying.ifBlank{"CANLI • "+st.name};live.text=if(controller?.isPlaying==true)"●  CANLI YAYIN"else"YAYIN HAZIR";live.setTextColor(if(controller?.isPlaying==true)orange else muted);main.setImageResource(if(controller?.isPlaying==true)R.drawable.ic_pause else R.drawable.ic_play);bigSpectrum.setPlaying(controller?.isPlaying==true)}
+        fun refresh(){if(!dialog.isShowing||isFinishing||isDestroyed)return;val st=stations.getOrNull(currentIndex)?:return;stationName.text=st.name;logo.bind(st.name,st.genre,st.logoUrl);logo.setPlaying(controller?.isPlaying==true);favorite.setColorFilter(if(isFavorite(st))orange else white);track.text=nowPlaying.ifBlank{"CANLI • "+st.name};live.text=if(controller?.isPlaying==true)"●  CANLI YAYIN"else"YAYIN HAZIR";live.setTextColor(if(controller?.isPlaying==true)orange else muted);main.setImageResource(if(controller?.isPlaying==true)R.drawable.ic_pause else R.drawable.ic_play);bigSpectrum.setPlaying(controller?.isPlaying==true)}
         fullPlayerRefresh={refresh()}
         favorite.setOnClickListener{val st=stations.getOrNull(currentIndex)?:return@setOnClickListener;toggleFavorite(st)}
         main.setOnClickListener{togglePlay()}
