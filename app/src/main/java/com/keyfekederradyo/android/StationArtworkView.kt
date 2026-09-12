@@ -17,14 +17,17 @@ class StationArtworkView(context: Context) : ImageView(context) {
     private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private var label = "RADYO"
     private var genre = ""
+    private var logoUrl = ""
     private var seed = 0
     private var active = false
     private var phase = 0f
 
-    fun bind(name: String, genreValue: String) {
+    fun bind(name: String, genreValue: String, artworkUrl: String = "") {
         label = name.take(12).uppercase()
         genre = genreValue.lowercase()
+        logoUrl = artworkUrl
         seed = name.hashCode().ushr(1)
+        StationImageLoader.load(this, artworkUrl, R.drawable.keyfe_keder_brand)
         invalidate()
     }
 
@@ -47,37 +50,49 @@ class StationArtworkView(context: Context) : ImageView(context) {
             "pop" in genre -> 0xFFFF6B35.toInt()
             else -> 0xFFFF7A00.toInt()
         }
+
         bgPaint.shader = LinearGradient(0f,0f,w,h,0xFF17171B.toInt(),0xFF08080A.toInt(),Shader.TileMode.CLAMP)
+        canvas.drawRect(0f,0f,w,h,bgPaint)
+
+        // Real station artwork (or the branded fallback) is drawn by ImageView.
+        super.onDraw(canvas)
+
+        // Keep the artwork readable while preserving the radio-app atmosphere.
+        bgPaint.shader = null
+        bgPaint.color = 0x30000000
         canvas.drawRect(0f,0f,w,h,bgPaint)
 
         val gx = .22f + ((seed % 55) / 100f)
         val gy = .16f + (((seed / 17) % 45) / 100f)
-        glowPaint.shader = RadialGradient(w*gx,h*gy,r*(.68f+pulse*.42f),accent,0x00111111,Shader.TileMode.CLAMP)
-        canvas.drawCircle(w*gx,h*gy,r*(.68f+pulse*.42f),glowPaint)
-        glowPaint.shader = RadialGradient(w*(1f-gx*.55f),h*.88f,r*(.50f+pulse*.24f),accent,0x0009090A,Shader.TileMode.CLAMP)
-        canvas.drawCircle(w*(1f-gx*.55f),h*.88f,r*(.50f+pulse*.24f),glowPaint)
+        glowPaint.shader = RadialGradient(w*gx,h*gy,r*(.48f+pulse*.34f),accent,0x00111111,Shader.TileMode.CLAMP)
+        canvas.drawCircle(w*gx,h*gy,r*(.48f+pulse*.34f),glowPaint)
+        glowPaint.shader = RadialGradient(w*(1f-gx*.55f),h*.88f,r*(.34f+pulse*.20f),accent,0x0009090A,Shader.TileMode.CLAMP)
+        canvas.drawCircle(w*(1f-gx*.55f),h*.88f,r*(.34f+pulse*.20f),glowPaint)
 
         linePaint.style = Paint.Style.STROKE; linePaint.strokeCap = Paint.Cap.ROUND
         linePaint.color = accent; linePaint.strokeWidth = maxOf(1f,w*.012f)
         val cx = w*.5f; val cy = h*.40f
         val rings = 3 + seed % 3
-        for (i in 1..rings) canvas.drawCircle(cx,cy,r*(.15f+i*.105f),linePaint.apply{alpha=80+i*28})
+        for (i in 1..rings) canvas.drawCircle(cx,cy,r*(.15f+i*.105f),linePaint.apply{alpha=55+i*22})
         linePaint.alpha=150
         val bars=16
         val gap=w/(bars+3)
         for(i in 0 until bars){
             val wave=((i*37+label.length*11+seed)%11)/11f
-            val bh=h*(.10f+wave*.30f)
+            val bh=h*(.10f+wave*.30f)*(if(active) 1f + .10f*sin((phase+i*.55f).toDouble()).toFloat() else 1f)
             canvas.drawLine(gap*(i+1),h*.82f,gap*(i+1),h*.82f-bh,linePaint)
         }
 
-        textPaint.textAlign=Paint.Align.CENTER
-        textPaint.color=0xFFF5F5F7.toInt()
-        textPaint.textSize=w*.095f
-        textPaint.typeface=android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT,android.graphics.Typeface.BOLD)
-        canvas.drawText(label,cx,h*.50f,textPaint)
-        textPaint.color=0xB8FFFFFF.toInt(); textPaint.textSize=w*.048f
-        canvas.drawText(if(genre.isBlank()) "CANLI RADYO" else genre.uppercase().take(18),cx,h*.59f,textPaint)
+        // Text is intentionally shown only when artwork is missing, so station logos stay clean.
+        if (logoUrl.isBlank()) {
+            textPaint.textAlign=Paint.Align.CENTER
+            textPaint.color=0xFFF5F5F7.toInt()
+            textPaint.textSize=w*.095f
+            textPaint.typeface=android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT,android.graphics.Typeface.BOLD)
+            canvas.drawText(label,cx,h*.50f,textPaint)
+            textPaint.color=0xB8FFFFFF.toInt(); textPaint.textSize=w*.048f
+            canvas.drawText(if(genre.isBlank()) "CANLI RADYO" else genre.uppercase().take(18),cx,h*.59f,textPaint)
+        }
 
         linePaint.style=Paint.Style.FILL; linePaint.color=accent; linePaint.alpha=190
         canvas.drawCircle(w*.12f,h*.12f,maxOf(1.5f,w*.012f),linePaint)
