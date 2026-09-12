@@ -8,6 +8,7 @@ import android.graphics.RadialGradient
 import android.graphics.Shader
 import android.widget.ImageView
 import kotlin.math.min
+import kotlin.math.sin
 
 class StationArtworkView(context: Context) : ImageView(context) {
     private val bgPaint = Paint(Paint.ANTI_ALIAS_FLAG)
@@ -17,6 +18,8 @@ class StationArtworkView(context: Context) : ImageView(context) {
     private var label = "RADYO"
     private var genre = ""
     private var seed = 0
+    private var active = false
+    private var phase = 0f
 
     fun bind(name: String, genreValue: String) {
         label = name.take(12).uppercase()
@@ -25,10 +28,16 @@ class StationArtworkView(context: Context) : ImageView(context) {
         invalidate()
     }
 
+    fun setPlaying(playing: Boolean) {
+        active = playing
+        if (playing) postInvalidateOnAnimation() else invalidate()
+    }
+
     override fun onDraw(canvas: Canvas) {
         val w = width.toFloat(); val h = height.toFloat()
         if (w <= 0f || h <= 0f) return
         val r = min(w, h) * .5f
+        val pulse = if (active) (0.78f + 0.22f * (0.5f + 0.5f * sin(phase.toDouble()))).toFloat() else 0.78f
         val accent = when {
             "rock" in genre -> 0xFFFF8A3D.toInt()
             "arabesk" in genre || "slow" in genre -> 0xFFE85B86.toInt()
@@ -43,10 +52,10 @@ class StationArtworkView(context: Context) : ImageView(context) {
 
         val gx = .22f + ((seed % 55) / 100f)
         val gy = .16f + (((seed / 17) % 45) / 100f)
-        glowPaint.shader = RadialGradient(w*gx,h*gy,r*.85f,accent,0x00111111,Shader.TileMode.CLAMP)
-        canvas.drawCircle(w*gx,h*gy,r*.85f,glowPaint)
-        glowPaint.shader = RadialGradient(w*(1f-gx*.55f),h*.88f,r*.58f,accent,0x0009090A,Shader.TileMode.CLAMP)
-        canvas.drawCircle(w*(1f-gx*.55f),h*.88f,r*.58f,glowPaint)
+        glowPaint.shader = RadialGradient(w*gx,h*gy,r*(.68f+pulse*.42f),accent,0x00111111,Shader.TileMode.CLAMP)
+        canvas.drawCircle(w*gx,h*gy,r*(.68f+pulse*.42f),glowPaint)
+        glowPaint.shader = RadialGradient(w*(1f-gx*.55f),h*.88f,r*(.50f+pulse*.24f),accent,0x0009090A,Shader.TileMode.CLAMP)
+        canvas.drawCircle(w*(1f-gx*.55f),h*.88f,r*(.50f+pulse*.24f),glowPaint)
 
         linePaint.style = Paint.Style.STROKE; linePaint.strokeCap = Paint.Cap.ROUND
         linePaint.color = accent; linePaint.strokeWidth = maxOf(1f,w*.012f)
@@ -73,5 +82,10 @@ class StationArtworkView(context: Context) : ImageView(context) {
         linePaint.style=Paint.Style.FILL; linePaint.color=accent; linePaint.alpha=190
         canvas.drawCircle(w*.12f,h*.12f,maxOf(1.5f,w*.012f),linePaint)
         canvas.drawCircle(w*.88f,h*.74f,maxOf(1.5f,w*.012f),linePaint)
+
+        if (active && width > 0 && height > 0) {
+            phase += .085f
+            postInvalidateOnAnimation()
+        }
     }
 }
