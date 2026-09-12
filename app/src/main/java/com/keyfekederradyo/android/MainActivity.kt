@@ -168,7 +168,7 @@ class MainActivity : AppCompatActivity() {
         root.addView(name, LinearLayout.LayoutParams(-1, 48.dp()))
         val track = TextView(this).apply { text = status.text; textSize = 13f; setTextColor(muted); gravity = Gravity.CENTER; maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END }
         root.addView(track, LinearLayout.LayoutParams(-1, 28.dp()))
-        root.addView(TextView(this).apply { text = "●  ${if (controller?.isPlaying == true) "CANLI" else "HAZIR"}"; textSize = 12f; setTextColor(orange); gravity = Gravity.CENTER }, LinearLayout.LayoutParams(-1, 28.dp()))
+        root.addView(TextView(this).apply { text = if (controller?.isPlaying == true) "●  CANLI" else "●  HAZIR"; textSize = 12f; setTextColor(orange); gravity = Gravity.CENTER }, LinearLayout.LayoutParams(-1, 28.dp()))
         val bigSpectrum = AudioSpectrumView(this).apply { setPlaying(controller?.isPlaying == true) }
         root.addView(bigSpectrum, LinearLayout.LayoutParams(-1, 40.dp()).apply { setMargins(18.dp(), 6.dp(), 18.dp(), 10.dp()) })
         val controls = LinearLayout(this).apply { gravity = Gravity.CENTER; orientation = LinearLayout.HORIZONTAL }
