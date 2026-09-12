@@ -15,6 +15,7 @@ class AudioSpectrumView @JvmOverloads constructor(
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
     private var phase = 0f
     private var active = false
+    private var stationSeed = 0
     private var attached = false
 
     init { paint.strokeCap = Paint.Cap.ROUND; setLayerType(View.LAYER_TYPE_SOFTWARE, null) }
@@ -24,8 +25,14 @@ class AudioSpectrumView @JvmOverloads constructor(
         if (playing) postInvalidateOnAnimation() else invalidate()
     }
 
+    fun setStationSeed(seed: Int) {
+        stationSeed = seed
+        phase = ((seed and 0xFF) / 255f) * 6.28f
+        invalidate()
+    }
+
     fun restart() {
-        phase = 0f
+        phase = ((stationSeed and 0xFF) / 255f) * 6.28f
         invalidate()
         if (active) postInvalidateOnAnimation()
     }
@@ -52,7 +59,7 @@ class AudioSpectrumView @JvmOverloads constructor(
 
         for (i in 0 until count) {
             val envelope = (0.25f + 0.75f * (1f - abs(i - count / 2f) / (count / 2f)))
-            val wave = if (active) abs(sin((phase + i * .73f).toDouble())).toFloat() else .10f
+            val wave = if (active) abs(sin((phase + i * (.51f + (stationSeed and 15) * .018f) + sin(i * .31f) * .45f).toDouble())).toFloat() else .10f
             val h = maxHeight * envelope * (.16f + .84f * wave)
             val x = gap * (i + 1)
             canvas.drawLine(x, center - h / 2f, x, center + h / 2f, paint)
