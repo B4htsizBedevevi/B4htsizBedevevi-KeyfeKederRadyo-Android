@@ -9,5 +9,6 @@ data class Station(
     val country: String = "",
     val quality: String = "",
     val song: String = "Canlı yayın",
-    val homepage: String = ""
+    val homepage: String = "",
+    val logoUrl: String = ""
 )
