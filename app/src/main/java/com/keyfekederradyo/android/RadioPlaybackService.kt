@@ -1,5 +1,7 @@
 package com.keyfekederradyo.android
 
+import android.os.Handler
+import android.os.Looper
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.PlaybackException
@@ -13,6 +15,22 @@ import androidx.media3.session.MediaSessionService
 class RadioPlaybackService : MediaSessionService() {
     private lateinit var player: ExoPlayer
     private lateinit var mediaSession: MediaSession
+    private val timerHandler = Handler(Looper.getMainLooper())
+    private val timerRunnable = object : Runnable {
+        override fun run() {
+            val until = getSharedPreferences("radio", MODE_PRIVATE).getLong("sleep_until", 0L)
+            if (until <= 0L) return
+            val remaining = until - System.currentTimeMillis()
+            if (remaining <= 0L) {
+                player.pause()
+                player.clearMediaItems()
+                getSharedPreferences("radio", MODE_PRIVATE).edit().remove("sleep_until").apply()
+                stopSelf()
+            } else {
+                timerHandler.postDelayed(this, minOf(remaining, 30_000L))
+            }
+        }
+    }
 
     override fun onCreate() {
         super.onCreate()
@@ -26,10 +44,11 @@ class RadioPlaybackService : MediaSessionService() {
             .build()
         player.addListener(object : Player.Listener {
             override fun onPlayerError(error: PlaybackException) {
-                // Never let a stream error crash the service. The Activity reports the error.
+                // A bad station must never crash the playback service.
             }
         })
         mediaSession = MediaSession.Builder(this, player).build()
+        timerHandler.post(timerRunnable)
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession = mediaSession
@@ -40,6 +59,7 @@ class RadioPlaybackService : MediaSessionService() {
     }
 
     override fun onDestroy() {
+        timerHandler.removeCallbacks(timerRunnable)
         if (::mediaSession.isInitialized) mediaSession.release()
         if (::player.isInitialized) player.release()
         super.onDestroy()
