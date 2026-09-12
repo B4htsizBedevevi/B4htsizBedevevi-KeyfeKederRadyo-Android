@@ -7,6 +7,7 @@ import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
@@ -44,16 +45,14 @@ class StationAdapter(
             isFocusable = true
         }
 
-        val logoView = TextView(context).apply {
-            gravity = Gravity.CENTER
-            textSize = 16f
-            setTextColor(Color.WHITE)
-            typeface = Typeface.DEFAULT_BOLD
+        val logoView = ImageView(context).apply {
+            scaleType = ImageView.ScaleType.CENTER_CROP
             background = GradientDrawable().apply {
                 shape = GradientDrawable.OVAL
                 setColor(Color.rgb(48, 48, 52))
                 setStroke(1.dp(context), Color.rgb(78, 78, 82))
             }
+            clipToOutline = true
             layoutParams = LinearLayout.LayoutParams(56.dp(context), 56.dp(context)).apply {
                 rightMargin = 13.dp(context)
             }
@@ -89,7 +88,7 @@ class StationAdapter(
         val favoriteView = ImageButton(context).apply {
             setBackgroundColor(Color.TRANSPARENT)
             setPadding(6.dp(context), 6.dp(context), 6.dp(context), 6.dp(context))
-            scaleType = android.widget.ImageView.ScaleType.CENTER_INSIDE
+            scaleType = ImageView.ScaleType.CENTER_INSIDE
             layoutParams = LinearLayout.LayoutParams(42.dp(context), 42.dp(context))
             contentDescription = "Favorilere ekle"
         }
@@ -102,12 +101,9 @@ class StationAdapter(
 
     override fun onBindViewHolder(holder: Holder, position: Int) {
         val station = items[position]
-        val initials = station.name.trim().split(" ")
-            .filter { it.isNotBlank() }
-            .take(2)
-            .joinToString("") { it.first().uppercaseChar().toString() }
 
-        holder.logoView.text = initials
+        holder.logoView.contentDescription = station.name
+        StationImageLoader.load(holder.logoView, station.logoUrl, R.drawable.ic_keyfe_keder_logo)
         holder.titleView.text = station.name
         holder.metaView.text = listOf(station.genre, station.country, station.quality)
             .filter { it.isNotBlank() }
@@ -128,25 +124,14 @@ class StationAdapter(
         holder.favoriteView.contentDescription = if (favorite) "Favorilerden çıkar" else "Favorilere ekle"
 
         holder.itemView.setOnClickListener {
-            holder.itemView.animate()
-                .scaleX(.985f).scaleY(.985f)
-                .setDuration(70)
-                .withEndAction {
-                    holder.itemView.animate()
-                        .scaleX(1f).scaleY(1f)
-                        .setDuration(120)
-                        .start()
-                }.start()
+            holder.itemView.animate().scaleX(.985f).scaleY(.985f).setDuration(70)
+                .withEndAction { holder.itemView.animate().scaleX(1f).scaleY(1f).setDuration(120).start() }.start()
             onClick(station)
         }
 
         holder.favoriteView.setOnClickListener {
-            holder.favoriteView.animate()
-                .rotationBy(18f)
-                .setDuration(80)
-                .withEndAction {
-                    holder.favoriteView.animate().rotation(0f).setDuration(100).start()
-                }.start()
+            holder.favoriteView.animate().rotationBy(18f).setDuration(80)
+                .withEndAction { holder.favoriteView.animate().rotation(0f).setDuration(100).start() }.start()
             onFavorite(station)
             notifyItemChanged(position)
         }
@@ -156,7 +141,7 @@ class StationAdapter(
 
     class Holder(
         view: View,
-        val logoView: TextView,
+        val logoView: ImageView,
         val titleView: TextView,
         val metaView: TextView,
         val badgeView: TextView,
