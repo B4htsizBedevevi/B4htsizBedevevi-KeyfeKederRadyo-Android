@@ -86,7 +86,7 @@ class StationAdapter(
         val active = station.resolvedUrl == playingUrl
         val context = holder.itemView.context
         holder.logoView.contentDescription = station.name
-        holder.logoView.bind(station.name, station.genre)
+        holder.logoView.bind(station.name, station.genre, station.logoUrl)
         holder.titleView.text = station.name
         holder.metaView.text = listOf(station.genre, station.country, station.language).filter { it.isNotBlank() }.distinct().joinToString(" • ").ifBlank { "Canlı radyo" }
         val favorite = isFavorite(station)
