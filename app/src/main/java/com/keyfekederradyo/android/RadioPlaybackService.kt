@@ -19,6 +19,8 @@ class RadioPlaybackService : MediaSessionService() {
     private lateinit var mediaSession: MediaSession
     private val timerHandler = Handler(Looper.getMainLooper())
     private val reconnectHandler = Handler(Looper.getMainLooper())
+    private var reconnectAttempt = 0
+    private val reconnectDelays = longArrayOf(4_000L, 8_000L, 15_000L, 30_000L)
     private val reconnectRunnable = object : Runnable {
         override fun run() {
             if (!::player.isInitialized) return
@@ -26,6 +28,7 @@ class RadioPlaybackService : MediaSessionService() {
             if (!player.playWhenReady) return
             val until = getSharedPreferences("radio", MODE_PRIVATE).getLong("sleep_until", 0L)
             if (until > 0L && until <= System.currentTimeMillis()) return
+            player.setMediaItem(item, player.currentPosition.coerceAtLeast(0L))
             player.prepare()
             player.play()
         }
@@ -60,10 +63,14 @@ class RadioPlaybackService : MediaSessionService() {
             .build()
         player.addListener(object : Player.Listener {
             override fun onMediaItemTransition(mediaItem: androidx.media3.common.MediaItem?, reason: Int) {
-                if (player.isPlaying) PlaybackState.setPlaying(mediaItem?.mediaId)
+                if (player.isPlaying) {
+                    reconnectAttempt = 0
+                    PlaybackState.setPlaying(mediaItem?.mediaId)
+                }
             }
 
             override fun onIsPlayingChanged(isPlaying: Boolean) {
+                if (isPlaying) reconnectAttempt = 0
                 PlaybackState.setPlaying(if (isPlaying) player.currentMediaItem?.mediaId else null)
             }
 
@@ -71,7 +78,9 @@ class RadioPlaybackService : MediaSessionService() {
                 PlaybackState.setPlaying(null)
                 reconnectHandler.removeCallbacks(reconnectRunnable)
                 if (player.currentMediaItem != null && player.playWhenReady) {
-                    reconnectHandler.postDelayed(reconnectRunnable, 4_000L)
+                    val delay = reconnectDelays[reconnectAttempt.coerceAtMost(reconnectDelays.lastIndex)]
+                    reconnectAttempt = (reconnectAttempt + 1).coerceAtMost(reconnectDelays.lastIndex)
+                    reconnectHandler.postDelayed(reconnectRunnable, delay)
                 }
             }
         })
@@ -94,8 +103,6 @@ class RadioPlaybackService : MediaSessionService() {
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession = mediaSession
 
     override fun onTaskRemoved(rootIntent: Intent?) {
-        // Keep the foreground media session alive while a station is playing.
-        // The explicit exit choice in MainActivity is the user-controlled way to stop playback.
         if (!player.isPlaying && !player.playWhenReady) stopSelf()
         super.onTaskRemoved(rootIntent)
     }
