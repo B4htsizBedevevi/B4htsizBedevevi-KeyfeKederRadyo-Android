@@ -246,7 +246,7 @@ class MainActivity : AppCompatActivity() {
     }
     private fun buildPickerCard():View {
         val card=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL; gravity=Gravity.CENTER_VERTICAL; setPadding(d(14),d(12),d(10),d(12)); background=GradientDrawable().apply { setColor(Color.rgb(39,27,20)); cornerRadius=d(24).toFloat(); setStroke(d(1),Color.rgb(105,58,28)) }; setOnClickListener { tap(this); pickForMe() } }
-        card.addView(TextView(this).apply { setImageResource(R.drawable.ic_shuffle); setColorFilter(orange); gravity=Gravity.CENTER; contentDescription="Rastgele radyo" },LinearLayout.LayoutParams(d(58),d(62)))
+        card.addView(ImageView(this).apply { setImageResource(R.drawable.ic_shuffle); setColorFilter(orange); scaleType=ImageView.ScaleType.CENTER_INSIDE; contentDescription="Rastgele radyo" },LinearLayout.LayoutParams(d(58),d(62)))
         val info=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; gravity=Gravity.CENTER_VERTICAL; layoutParams=LinearLayout.LayoutParams(0,-2,1f) }
         info.addView(TextView(this).apply { text="KEYFİME BIRAK"; textSize=16f; setTextColor(white); setTypeface(typeface,android.graphics.Typeface.BOLD); letterSpacing=0.04f })
         info.addView(TextView(this).apply { text="Ben bir frekans bulayım, kararı sen ver."; textSize=11f; setTextColor(Color.rgb(204,166,136)) })
