@@ -157,7 +157,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun showFullPlayer() {
         val dialog = android.app.Dialog(this)
-        val scroll = ScrollView(this).apply { overScrollMode = View.OVER_SCROLL_NEVER; fillViewport = true }
+        val scroll = ScrollView(this).apply { overScrollMode = View.OVER_SCROLL_NEVER }
         val root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_HORIZONTAL; setPadding(24.dp(), 12.dp(), 24.dp(), 16.dp()); background = rounded(bg, 30) }
         val close = TextView(this).apply { text = "⌄"; textSize = 28f; setTextColor(muted); gravity = Gravity.CENTER; contentDescription = "Kapat"; setOnClickListener { dialog.dismiss() } }
         root.addView(close, LinearLayout.LayoutParams(-1, 34.dp()))
@@ -220,7 +220,9 @@ class MainActivity : AppCompatActivity() {
                     }
                     override fun onPlayerError(error: androidx.media3.common.PlaybackException) { status.text = "Yayın açılamadı"; spectrum.setPlaying(false); liveBadge.text = "RADYO"; liveBadge.setTextColor(muted) }
                 })
-                refresh()
+                val playing = controller?.isPlaying == true
+                play.setImageResource(if (playing) R.drawable.ic_pause else R.drawable.ic_play)
+                spectrum.setPlaying(playing)
             } catch (_: Exception) { status.text = "Oynatıcı başlatılamadı" }
         }, ContextCompat.getMainExecutor(this))
     }
