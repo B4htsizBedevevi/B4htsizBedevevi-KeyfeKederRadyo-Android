@@ -15,32 +15,46 @@ class AudioSpectrumView @JvmOverloads constructor(
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
     private var phase = 0f
     private var active = false
+    private var attached = false
 
-    init { paint.strokeCap = Paint.Cap.ROUND }
+    init { paint.strokeCap = Paint.Cap.ROUND; setLayerType(View.LAYER_TYPE_SOFTWARE, null) }
 
     fun setPlaying(playing: Boolean) {
         active = playing
-        invalidate()
+        if (playing) postInvalidateOnAnimation() else invalidate()
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        attached = true
+        if (active) postInvalidateOnAnimation()
+    }
+
+    override fun onDetachedFromWindow() {
+        attached = false
+        super.onDetachedFromWindow()
     }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         val count = 28
-        val gap = width.toFloat() / (count + 1)
+        val gap = width.toFloat() / (count + 1).coerceAtLeast(2)
         val center = height / 2f
-        val maxHeight = height * 0.82f
+        val maxHeight = (height * 0.82f).coerceAtLeast(3f)
         paint.color = 0xFFFF7A00.toInt()
         paint.strokeWidth = maxOf(2f, gap * .16f)
+
         for (i in 0 until count) {
             val envelope = (0.25f + 0.75f * (1f - abs(i - count / 2f) / (count / 2f)))
-            val wave = if (active) abs(sin((phase + i * .73f).toDouble())).toFloat() else .12f
+            val wave = if (active) abs(sin((phase + i * .73f).toDouble())).toFloat() else .10f
             val h = maxHeight * envelope * (.16f + .84f * wave)
             val x = gap * (i + 1)
             canvas.drawLine(x, center - h / 2f, x, center + h / 2f, paint)
         }
-        if (active) {
+
+        if (active && attached && width > 0 && height > 0) {
             phase += .11f
-            postInvalidateDelayed(32)
+            postInvalidateOnAnimation()
         }
     }
 }
