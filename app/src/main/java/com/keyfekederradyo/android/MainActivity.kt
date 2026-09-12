@@ -232,8 +232,11 @@ class MainActivity : AppCompatActivity() {
         homeContainer.addView(TextView(this).apply{text="Hemen bir mod seç";textSize=18f;setTextColor(white);setTypeface(typeface,android.graphics.Typeface.BOLD);setPadding(d(4),d(18),d(4),d(8))})
         val chips=android.widget.HorizontalScrollView(this).apply{isHorizontalScrollBarEnabled=false;overScrollMode=View.OVER_SCROLL_NEVER}
         val row=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL}
-        listOf("Sakin","Dertli","Enerjik","Yoldayım","Kafamı dinliyorum").forEach{label->
-            val chip=TextView(this).apply{text=label;textSize=12f;setTextColor(white);gravity=Gravity.CENTER;setPadding(d(16),0,d(16),0);background=rounded(surface2,20);setOnClickListener{tap(this);pickForMe()}}
+        val moodItems=listOf(R.drawable.ic_moon to "Sakin",R.drawable.ic_heart to "Dertli",R.drawable.ic_bolt to "Enerjik",R.drawable.ic_car to "Yoldayım",R.drawable.ic_coffee to "Kafamı dinliyorum")
+        moodItems.forEach{(iconRes,label)->
+            val chip=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL;gravity=Gravity.CENTER;setPadding(d(13),0,d(15),0);background=rounded(surface2,20);isClickable=true;setOnClickListener{tap(this);pickForMe()}}
+            chip.addView(ImageView(this).apply{setImageResource(iconRes);setColorFilter(white);layoutParams=LinearLayout.LayoutParams(d(18),d(20)).apply{rightMargin=d(7)}})
+            chip.addView(TextView(this).apply{text=label;textSize=12f;setTextColor(white);gravity=Gravity.CENTER})
             row.addView(chip,LinearLayout.LayoutParams(-2,d(42)).apply{rightMargin=d(8)})
         }
         chips.addView(row,ViewGroup.LayoutParams(-2,d(46)));homeContainer.addView(chips,LinearLayout.LayoutParams(-1,d(52)))
