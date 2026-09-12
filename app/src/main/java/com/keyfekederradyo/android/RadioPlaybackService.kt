@@ -6,10 +6,14 @@ import android.os.Handler
 import android.os.Looper
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
+import androidx.media3.common.Metadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.extractor.metadata.icy.IcyInfo
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 
@@ -62,7 +66,7 @@ class RadioPlaybackService : MediaSessionService() {
             .setHandleAudioBecomingNoisy(true)
             .build()
         player.addListener(object : Player.Listener {
-            override fun onMediaItemTransition(mediaItem: androidx.media3.common.MediaItem?, reason: Int) {
+            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                 if (player.isPlaying) {
                     reconnectAttempt = 0
                     PlaybackState.setPlaying(mediaItem?.mediaId)
@@ -72,6 +76,36 @@ class RadioPlaybackService : MediaSessionService() {
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 if (isPlaying) reconnectAttempt = 0
                 PlaybackState.setPlaying(if (isPlaying) player.currentMediaItem?.mediaId else null)
+            }
+
+            override fun onMetadata(metadata: Metadata) {
+                for (i in 0 until metadata.length()) {
+                    val info = metadata.get(i) as? IcyInfo ?: continue
+                    val raw = info.title?.trim().orEmpty()
+                    if (raw.isBlank()) continue
+                    val current = player.currentMediaItem ?: continue
+                    val parts = raw.split(Regex("\\s+[-–—|/]\\s+"), limit = 2)
+                    val artist: String?
+                    val song: String
+                    if (parts.size == 2) {
+                        artist = parts[0].trim().takeIf { it.isNotBlank() }
+                        song = parts[1].trim()
+                    } else {
+                        artist = current.mediaMetadata.artist?.toString()?.takeIf { it.isNotBlank() && it != "Keyfe Keder Radyo" }
+                        song = raw
+                    }
+                    if (song.isBlank()) continue
+                    val updated = MediaMetadata.Builder()
+                        .setTitle(song)
+                        .setArtist(artist ?: "Keyfe Keder Radyo")
+                        .setAlbumTitle(current.mediaMetadata.albumTitle ?: "Canlı Yayın")
+                        .setArtworkUri(current.mediaMetadata.artworkUri)
+                        .build()
+                    val updatedItem = current.buildUpon().setMediaMetadata(updated).build()
+                    val index = player.currentMediaItemIndex
+                    if (index >= 0) player.replaceMediaItem(index, updatedItem)
+                    break
+                }
             }
 
             override fun onPlayerError(error: PlaybackException) {
