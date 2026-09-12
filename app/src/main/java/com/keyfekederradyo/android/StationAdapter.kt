@@ -94,8 +94,8 @@ class StationAdapter(
         holder.badgeView.text = if (favorite) "● FAVORİ" else ""
         holder.liveView.visibility = if (active) View.VISIBLE else View.GONE
         holder.liveView.text = if (active) "●  CANLI YAYIN" else ""
-        holder.favoriteView.setImageResource(R.drawable.ic_heart)
-        holder.favoriteView.setColorFilter(if (favorite) Color.rgb(255,122,0) else Color.rgb(185,185,190))
+        holder.favoriteView.setImageResource(if (favorite) R.drawable.ic_heart else R.drawable.ic_heart_outline)
+        holder.favoriteView.setColorFilter(if (favorite) Color.rgb(255,122,0) else Color.WHITE)
         holder.favoriteView.alpha = if (favorite) 1f else .78f
         holder.favoriteView.contentDescription = if (favorite) "Favorilerden çıkar" else "Favorilere ekle"
 
