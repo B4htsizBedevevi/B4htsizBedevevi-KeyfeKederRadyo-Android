@@ -126,14 +126,16 @@ class MainActivity : AppCompatActivity() {
             background = rounded(Color.rgb(18,18,19), 12)
             contentDescription = "Keyfe Keder Radyo"
         }
-        brandBox.addView(brand, LinearLayout.LayoutParams(d(48), d(48)).apply { rightMargin = d(10) })
+        brandBox.addView(brand, LinearLayout.LayoutParams(d(42), d(42)).apply { rightMargin = d(10) })
         val brandText = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_VERTICAL }
         val brandTitle = TextView(this).apply {
             text = "KEYFE KEDER RADYO"
-            textSize = 15.5f
+            textSize = 14f
             setTextColor(white)
             setTypeface(typeface, android.graphics.Typeface.BOLD)
-            letterSpacing = 0.03f
+            letterSpacing = 0.01f
+            maxLines = 1
+            ellipsize = android.text.TextUtils.TruncateAt.END
         }
         tagline = TextView(this).apply { text = taglines[0]; textSize = 10.5f; setTextColor(orange); alpha = 0.9f }
         brandText.addView(brandTitle)
@@ -241,7 +243,7 @@ class MainActivity : AppCompatActivity() {
         }
         chips.addView(row,ViewGroup.LayoutParams(-2,d(46)));homeContainer.addView(chips,LinearLayout.LayoutParams(-1,d(52)))
         addSection("Son dinlediklerin",historyStations(),"Henüz birlikte bir radyo dinlemedik.")
-        addSection("Favorilerin",stations.filter{isFavorite(it)}.take(10),"Buraya sevdiğin radyoları atalım. Kalbe dokun yeter.")
+        addSection("Kalbini bıraktıkların",stations.filter{isFavorite(it)}.take(10),"Buraya sevdiğin radyoları atalım. Kalbe dokun yeter.")
         addSection("Bizim seçimlerimiz",stations.filter{it.genre.isNotBlank()}.take(10),"Birazdan sana güzel frekanslar çıkarırım.")
     }
     private fun buildPickerCard():View {
