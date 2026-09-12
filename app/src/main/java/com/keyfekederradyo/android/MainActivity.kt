@@ -42,7 +42,7 @@ class MainActivity : AppCompatActivity() {
     private val prefs by lazy { getSharedPreferences("radio", MODE_PRIVATE) }
     private val executor = Executors.newSingleThreadExecutor()
     private val handler = Handler(Looper.getMainLooper())
-    private val taglines = listOf("Bugün ne açsak? 🙂","Keyfin ne isterse, frekans orada.","Biraz müzik, biraz keyif.","Kafana göre bir radyo bulalım.","Bir Frekans, Bin Keyif.")
+    private val taglines = listOf("Bugün ne açsak?","Keyfin ne isterse, frekans orada.","Biraz müzik, biraz keyif.","Kafana göre bir radyo bulalım.","Bir Frekans, Bin Keyif.")
     private var taglineIndex = 0
     private var stations = emptyList<Station>()
     private var currentIndex = -1
@@ -225,25 +225,25 @@ class MainActivity : AppCompatActivity() {
 
     private fun buildHome() {
         homeContainer.removeAllViews()
-        homeContainer.addView(TextView(this).apply{text="Selam 👋";textSize=13f;setTextColor(orange);setPadding(d(4),d(10),d(4),0)})
+        homeContainer.addView(TextView(this).apply{text="Selam";textSize=13f;setTextColor(orange);setPadding(d(4),d(10),d(4),0)})
         homeContainer.addView(TextView(this).apply{text="Bugün hangi frekanstasın?";textSize=27f;setTextColor(white);setTypeface(typeface,android.graphics.Typeface.BOLD);setPadding(d(4),d(2),d(4),0)})
-        homeContainer.addView(TextView(this).apply{text="Canın ne istiyorsa söyle, gerisini ben hallederim. 😌";textSize=13f;setTextColor(muted);setPadding(d(4),d(4),d(4),d(14))})
+        homeContainer.addView(TextView(this).apply{text="Canın ne istiyorsa söyle, gerisini ben hallederim.";textSize=13f;setTextColor(muted);setPadding(d(4),d(4),d(4),d(14))})
         homeContainer.addView(buildPickerCard())
         homeContainer.addView(TextView(this).apply{text="Hemen bir mod seç";textSize=18f;setTextColor(white);setTypeface(typeface,android.graphics.Typeface.BOLD);setPadding(d(4),d(18),d(4),d(8))})
         val chips=android.widget.HorizontalScrollView(this).apply{isHorizontalScrollBarEnabled=false;overScrollMode=View.OVER_SCROLL_NEVER}
         val row=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL}
-        listOf("🌙 Sakin","💔 Dertli","🔥 Enerjik","🚗 Yoldayım","☕ Kafamı dinliyorum").forEach{label->
+        listOf("Sakin","Dertli","Enerjik","Yoldayım","Kafamı dinliyorum").forEach{label->
             val chip=TextView(this).apply{text=label;textSize=12f;setTextColor(white);gravity=Gravity.CENTER;setPadding(d(16),0,d(16),0);background=rounded(surface2,20);setOnClickListener{tap(this);pickForMe()}}
             row.addView(chip,LinearLayout.LayoutParams(-2,d(42)).apply{rightMargin=d(8)})
         }
         chips.addView(row,ViewGroup.LayoutParams(-2,d(46)));homeContainer.addView(chips,LinearLayout.LayoutParams(-1,d(52)))
-        addSection("Son dinlediklerin 👀",historyStations(),"Henüz birlikte bir radyo dinlemedik.")
-        addSection("Favorilerin ❤️",stations.filter{isFavorite(it)}.take(10),"Buraya sevdiğin radyoları atalım. Kalbe dokun yeter.")
-        addSection("Bizim seçimlerimiz 🧡",stations.filter{it.genre.isNotBlank()}.take(10),"Birazdan sana güzel frekanslar çıkarırım.")
+        addSection("Son dinlediklerin Göz atalım",historyStations(),"Henüz birlikte bir radyo dinlemedik.")
+        addSection("Favorilerin Kalp",stations.filter{isFavorite(it)}.take(10),"Buraya sevdiğin radyoları atalım. Kalbe dokun yeter.")
+        addSection("Bizim seçimlerimiz Bizim seçimlerimiz",stations.filter{it.genre.isNotBlank()}.take(10),"Birazdan sana güzel frekanslar çıkarırım.")
     }
     private fun buildPickerCard():View {
         val card=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL; gravity=Gravity.CENTER_VERTICAL; setPadding(d(14),d(12),d(10),d(12)); background=GradientDrawable().apply { setColor(Color.rgb(39,27,20)); cornerRadius=d(24).toFloat(); setStroke(d(1),Color.rgb(105,58,28)) }; setOnClickListener { tap(this); pickForMe() } }
-        card.addView(TextView(this).apply { text="🎲"; textSize=30f; gravity=Gravity.CENTER },LinearLayout.LayoutParams(d(58),d(62)))
+        card.addView(TextView(this).apply { text="Rastgele"; textSize=30f; gravity=Gravity.CENTER },LinearLayout.LayoutParams(d(58),d(62)))
         val info=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; gravity=Gravity.CENTER_VERTICAL; layoutParams=LinearLayout.LayoutParams(0,-2,1f) }
         info.addView(TextView(this).apply { text="KEYFİME BIRAK"; textSize=16f; setTextColor(white); setTypeface(typeface,android.graphics.Typeface.BOLD); letterSpacing=0.04f })
         info.addView(TextView(this).apply { text="Bugün seçimi sana yaptırmıyorum."; textSize=11f; setTextColor(Color.rgb(204,166,136)) })
@@ -329,7 +329,7 @@ class MainActivity : AppCompatActivity() {
             background=rounded(Color.rgb(31,25,22),18)
         }
         reasonBox.addView(TextView(this).apply{
-            text="✦"
+            text="Seçim"
             textSize=17f
             setTextColor(orange)
             gravity=Gravity.CENTER
@@ -356,7 +356,7 @@ class MainActivity : AppCompatActivity() {
 
         val secondary=LinearLayout(this).apply{gravity=Gravity.CENTER}
         val another=TextView(this).apply{
-            text="🎲  BAŞKA BİR TANE"
+            text="Rastgele  BAŞKA BİR TANE"
             textSize=11f
             setTextColor(muted)
             gravity=Gravity.CENTER
@@ -390,9 +390,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun buildDiscover() {
         homeContainer.removeAllViews()
-        homeContainer.addView(TextView(this).apply { text="Biraz kurcalayalım mı? ✨"; textSize=25f; setTextColor(white); setTypeface(typeface,android.graphics.Typeface.BOLD); setPadding(d(4),d(12),d(4),0) })
-        homeContainer.addView(TextView(this).apply { text="Burada yeni frekanslar buluyoruz. Hep aynı radyoda takılmak yok. 😄"; textSize=13f; setTextColor(muted); setPadding(d(4),d(4),d(4),d(16)) })
-        homeContainer.addView(TextView(this).apply { text="🌙 Ruh haline göre"; textSize=18f; setTextColor(white); setTypeface(typeface,android.graphics.Typeface.BOLD); setPadding(d(4),d(8),d(4),d(8)) })
+        homeContainer.addView(TextView(this).apply { text="Biraz kurcalayalım mı? Akıcı"; textSize=25f; setTextColor(white); setTypeface(typeface,android.graphics.Typeface.BOLD); setPadding(d(4),d(12),d(4),0) })
+        homeContainer.addView(TextView(this).apply { text="Burada yeni frekanslar buluyoruz. Hep aynı radyoda takılmak yok. "; textSize=13f; setTextColor(muted); setPadding(d(4),d(4),d(4),d(16)) })
+        homeContainer.addView(TextView(this).apply { text="Ruh haline göre"; textSize=18f; setTextColor(white); setTypeface(typeface,android.graphics.Typeface.BOLD); setPadding(d(4),d(8),d(4),d(8)) })
         val sc=android.widget.HorizontalScrollView(this).apply{isHorizontalScrollBarEnabled=false;overScrollMode=View.OVER_SCROLL_NEVER}
         val row=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL}
         listOf("Sakin","Dertli","Enerjik","Gece","Yolculuk").forEach{label->
@@ -401,8 +401,8 @@ class MainActivity : AppCompatActivity() {
         }
         sc.addView(row,ViewGroup.LayoutParams(-2,d(46)));homeContainer.addView(sc,LinearLayout.LayoutParams(-1,d(52)))
         val history=prefs.getString("history","").orEmpty().split("|").filter{it.isNotBlank()}.toSet()
-        addSection("🆕 Daha önce dinlemediklerin",stations.filter{it.resolvedUrl !in history}.shuffled().take(10),"Hepsini denemişsin. O zaman Keyfime Bırak'a teslim ol. 😄")
-        addSection("🎲 Bugün ben seçtim",stations.shuffled().take(10),"Radyoları çekiyoruz, az sonra burada olur. 🙂")
+        addSection("Daha önce dinlemediklerin",stations.filter{it.resolvedUrl !in history}.shuffled().take(10),"Hepsini denemişsin. O zaman Keyfime Bırak'a teslim ol. ")
+        addSection("Bugün ben seçtim",stations.shuffled().take(10),"Radyoları çekiyoruz, az sonra burada olur. ")
     }
 
     private fun discoverFilter(filter:String) {
@@ -414,7 +414,7 @@ class MainActivity : AppCompatActivity() {
             else->Regex("road|drive|80|90",RegexOption.IGNORE_CASE)
         }
         val list=stations.filter{"${it.genre} ${it.name}".contains(rx)}
-        if(list.isEmpty()) android.widget.Toast.makeText(this,"Bu köşede şu an pek radyo yok. Başka birine bakalım. 🙂",android.widget.Toast.LENGTH_SHORT).show() else {showRadios(list);selectNav(1)}
+        if(list.isEmpty()) android.widget.Toast.makeText(this,"Bu köşede şu an pek radyo yok. Başka birine bakalım. ",android.widget.Toast.LENGTH_SHORT).show() else {showRadios(list);selectNav(1)}
     }
     private fun addSection(name:String,list:List<Station>,empty:String){
         homeContainer.addView(TextView(this).apply{text=name;textSize=18f;setTextColor(white);setTypeface(typeface,android.graphics.Typeface.BOLD);setPadding(d(4),d(18),d(4),d(8))})
@@ -528,10 +528,10 @@ class MainActivity : AppCompatActivity() {
                     override fun onPlaybackStateChanged(playbackState:Int)=refresh()
                     override fun onMediaItemTransition(item:MediaItem?,reason:Int){title.text=item?.mediaMetadata?.title?:"Bir radyo seç";syncCurrentStation();refresh()}
                     override fun onMetadata(metadata:Metadata){for(i in 0 until metadata.length()){(metadata.get(i)as?IcyInfo)?.title?.trim()?.takeIf{it.isNotBlank()}?.let{raw->nowPlaying=formatNowPlaying(raw);if(!isFinishing&&!isDestroyed)status.text=nowPlaying;fullPlayerRefresh?.invoke()}}}
-                    override fun onPlayerError(error:androidx.media3.common.PlaybackException){nowPlaying="";if(!isFinishing&&!isDestroyed){status.text="Bu yayın açılmadı. Başka bir frekans deneyelim. 🙂";spectrum.setPlaying(false);miniLogo.setPlaying(false);liveBadge.text="RADYO";liveBadge.setTextColor(muted);fullPlayerRefresh?.invoke()}}
+                    override fun onPlayerError(error:androidx.media3.common.PlaybackException){nowPlaying="";if(!isFinishing&&!isDestroyed){status.text="Bu yayın açılmadı. Başka bir frekans deneyelim. ";spectrum.setPlaying(false);miniLogo.setPlaying(false);liveBadge.text="RADYO";liveBadge.setTextColor(muted);fullPlayerRefresh?.invoke()}}
                 })
                 syncCurrentStation()
-            }catch(_:Exception){if(!isFinishing&&!isDestroyed)status.text="Müzik kutusunu açamadım. Bir daha deneyelim. 🙂"}
+            }catch(_:Exception){if(!isFinishing&&!isDestroyed)status.text="Müzik kutusunu açamadım. Bir daha deneyelim. "}
         },ContextCompat.getMainExecutor(this))
     }
 
@@ -548,11 +548,11 @@ class MainActivity : AppCompatActivity() {
         rememberStation(station);currentIndex=stations.indexOfFirst{it.resolvedUrl==station.resolvedUrl}.coerceAtLeast(0)
         val metadata=androidx.media3.common.MediaMetadata.Builder().setTitle(station.name).setArtist("Keyfe Keder Radyo").setAlbumTitle("Canlı Yayın").setArtworkUri(Uri.parse("android.resource://$packageName/drawable/station_artwork_default")).build()
         val item=MediaItem.Builder().setMediaId(station.resolvedUrl).setUri(station.resolvedUrl).setMediaMetadata(metadata).build()
-        try{controller?.setMediaItem(item);controller?.prepare();controller?.play()}catch(_:Exception){status.text="Bu radyoya bağlanamadık. Başka birini deneyelim. 🙂";return}
+        try{controller?.setMediaItem(item);controller?.prepare();controller?.play()}catch(_:Exception){status.text="Bu radyoya bağlanamadık. Başka birini deneyelim. ";return}
         title.text=station.name;nowPlaying="";status.text="Bağlanıyor...";liveBadge.text="BAĞLANIYOR";liveBadge.setTextColor(orange);miniLogo.bind(station.name,station.genre,station.logoUrl);miniLogo.setPlaying(true);spectrum.setStationSeed(station.name.hashCode());spectrum.restart();fullPlayerRefresh?.invoke()
     }
     private fun filter(query:String){val q=query.trim();val list=if(q.isBlank())stations else stations.filter{it.name.contains(q,true)||it.genre.contains(q,true)||it.country.contains(q,true)||it.language.contains(q,true)};if(selectedNav==0){showRadios(list);selectNav(1)}else adapter.submitList(list)}
-    private fun loadStations(){executor.execute{try{val loaded=StationRepository().load();runOnUiThread{if(isFinishing||isDestroyed)return@runOnUiThread;stations=loaded;adapter.submitList(loaded);if(selectedNav==0)buildHome();syncCurrentStation()}}catch(_:Exception){runOnUiThread{if(!isFinishing&&!isDestroyed)status.text="Radyoları getiremedik, birazdan tekrar deneriz. 🙂"}}}}
+    private fun loadStations(){executor.execute{try{val loaded=StationRepository().load();runOnUiThread{if(isFinishing||isDestroyed)return@runOnUiThread;stations=loaded;adapter.submitList(loaded);if(selectedNav==0)buildHome();syncCurrentStation()}}catch(_:Exception){runOnUiThread{if(!isFinishing&&!isDestroyed)status.text="Radyoları getiremedik, birazdan tekrar deneriz. "}}}}
     private fun historyStations():List<Station>{val urls=prefs.getString("history","").orEmpty().split("|").filter{it.isNotBlank()};return urls.mapNotNull{url->stations.firstOrNull{it.resolvedUrl==url}}.take(10)}
     private fun rememberStation(station:Station){val urls=prefs.getString("history","").orEmpty().split("|").filter{it.isNotBlank()&&it!=station.resolvedUrl}.toMutableList();urls.add(0,station.resolvedUrl);prefs.edit().putString("history",urls.take(12).joinToString("|")).apply()}
     private fun isFavorite(station:Station)=prefs.getBoolean(station.resolvedUrl,false)
@@ -570,8 +570,8 @@ class MainActivity : AppCompatActivity() {
         root.addView(TextView(this).apply{text="Ayarlar";textSize=25f;setTextColor(white);setTypeface(typeface,android.graphics.Typeface.BOLD)},LinearLayout.LayoutParams(-1,d(38)))
         root.addView(sectionLabel("OYNATMA"))
         root.addView(settingCard("🌙","Uyku zamanlayıcısı",sleepTimerLabel()){val options=arrayOf("Kapalı","15 dakika","30 dakika","45 dakika","60 dakika","90 dakika");android.app.AlertDialog.Builder(this@MainActivity).setTitle("Uyku zamanlayıcısı").setItems(options){_,which->val mins=when(which){0->0L;1->15L;2->30L;3->45L;4->60L;else->90L};prefs.edit().putLong("sleep_until",if(mins==0L)0L else System.currentTimeMillis()+mins*60_000L).apply()}.show()})
-        root.addView(settingCard("📡","Arka planda çalma","Yayın açıkken uygulamadan çıkabilirsin"){android.widget.Toast.makeText(this,"Arka planda çalma etkin: medya servisi yayını sürdürüyor.",android.widget.Toast.LENGTH_SHORT).show()})
-        root.addView(sectionLabel("GÖRÜNÜM"));root.addView(settingCard("✨","Akıcı animasyonlar","Kartlar ve spectrum efektleri açık",null));root.addView(settingCard("🎨","Keyfe Keder teması","Turuncu imza renk",null));root.addView(sectionLabel("UYGULAMA"));root.addView(settingCard("📻","Keyfe Keder Radyo","Android • "+BuildConfig.VERSION_NAME,null));dialog.setContentView(root);dialog.window?.setBackgroundDrawableResource(android.R.color.transparent);dialog.show();dialog.window?.setLayout(-1,-2)
+        root.addView(settingCard("Arka plan","Arka planda çalma","Yayın açıkken uygulamadan çıkabilirsin"){android.widget.Toast.makeText(this,"Arka planda çalma etkin: medya servisi yayını sürdürüyor.",android.widget.Toast.LENGTH_SHORT).show()})
+        root.addView(sectionLabel("GÖRÜNÜM"));root.addView(settingCard("Akıcı","Akıcı animasyonlar","Kartlar ve spectrum efektleri açık",null));root.addView(settingCard("Tema","Keyfe Keder teması","Turuncu imza renk",null));root.addView(sectionLabel("UYGULAMA"));root.addView(settingCard("Radyo","Keyfe Keder Radyo","Android • "+BuildConfig.VERSION_NAME,null));dialog.setContentView(root);dialog.window?.setBackgroundDrawableResource(android.R.color.transparent);dialog.show();dialog.window?.setLayout(-1,-2)
     }
     private fun sectionLabel(value:String)=TextView(this).apply{text=value;textSize=10f;setTextColor(orange);setTypeface(typeface,android.graphics.Typeface.BOLD);setPadding(d(4),d(14),d(4),d(7))}
     private fun settingCard(icon:String,name:String,detail:String,action:(()->Unit)?):View{val card=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL;gravity=Gravity.CENTER_VERTICAL;setPadding(d(14),d(9),d(12),d(9));background=rounded(surface2,18);if(action!=null)setOnClickListener{tap(this);action.invoke()}};card.addView(TextView(this).apply{text=icon;textSize=19f;gravity=Gravity.CENTER},LinearLayout.LayoutParams(d(42),d(50)));val info=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;gravity=Gravity.CENTER_VERTICAL;layoutParams=LinearLayout.LayoutParams(0,-2,1f)};info.addView(TextView(this).apply{text=name;textSize=14f;setTextColor(white);setTypeface(typeface,android.graphics.Typeface.BOLD)});info.addView(TextView(this).apply{text=detail;textSize=10f;setTextColor(muted)});card.addView(info);return card}
