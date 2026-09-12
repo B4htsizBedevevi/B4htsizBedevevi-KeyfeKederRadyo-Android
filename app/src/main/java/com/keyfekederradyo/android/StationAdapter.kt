@@ -87,7 +87,7 @@ class StationAdapter(
 
         val favoriteView = ImageButton(context).apply {
             setBackgroundColor(Color.TRANSPARENT)
-            setPadding(6.dp(context), 6.dp(context), 6.dp(context), 6.dp(context))
+            setPadding(8.dp(context), 8.dp(context), 8.dp(context), 8.dp(context))
             scaleType = ImageView.ScaleType.CENTER_INSIDE
             layoutParams = LinearLayout.LayoutParams(42.dp(context), 42.dp(context))
             contentDescription = "Favorilere ekle"
@@ -113,10 +113,7 @@ class StationAdapter(
         val favorite = isFavorite(station)
         holder.badgeView.visibility = if (favorite) View.VISIBLE else View.GONE
         holder.badgeView.text = if (favorite) "● FAVORİ" else ""
-        holder.favoriteView.setImageResource(
-            if (favorite) android.R.drawable.btn_star_big_on
-            else android.R.drawable.btn_star_big_off
-        )
+        holder.favoriteView.setImageResource(R.drawable.ic_heart)
         holder.favoriteView.setColorFilter(
             if (favorite) Color.rgb(255, 122, 0) else Color.rgb(185, 185, 190)
         )
@@ -130,8 +127,8 @@ class StationAdapter(
         }
 
         holder.favoriteView.setOnClickListener {
-            holder.favoriteView.animate().rotationBy(18f).setDuration(80)
-                .withEndAction { holder.favoriteView.animate().rotation(0f).setDuration(100).start() }.start()
+            holder.favoriteView.animate().scaleX(.84f).scaleY(.84f).setDuration(80)
+                .withEndAction { holder.favoriteView.animate().scaleX(1f).scaleY(1f).setDuration(130).start() }.start()
             onFavorite(station)
             notifyItemChanged(position)
         }
