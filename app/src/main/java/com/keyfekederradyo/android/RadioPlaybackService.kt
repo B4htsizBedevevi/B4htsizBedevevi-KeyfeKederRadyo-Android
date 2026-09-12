@@ -1,10 +1,10 @@
 package com.keyfekederradyo.android
 
-import android.net.Uri
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
+import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.CommandButton
@@ -45,21 +45,16 @@ class RadioPlaybackService : MediaSessionService() {
             .setHandleAudioBecomingNoisy(true)
             .build()
 
-        player.addListener(object : androidx.media3.common.Player.Listener {
+        player.addListener(object : Player.Listener {
             override fun onPlayerError(error: PlaybackException) {
-                val uri = player.currentMediaItem?.localConfiguration?.uri?.toString() ?: return
-                val fallback = player.currentMediaItem?.mediaMetadata?.extras?.getString("fallback_url").orEmpty()
+                val item = player.currentMediaItem ?: return
+                val uri = item.localConfiguration?.uri?.toString().orEmpty()
+                val fallback = item.mediaMetadata.extras?.getString("fallback_url").orEmpty()
                 if (fallback.isNotBlank() && fallback != uri) {
-                    val old = player.currentMediaItem ?: return
-                    val item = old.buildUpon().setUri(fallback).build()
-                    player.setMediaItem(item)
+                    player.setMediaItem(item.buildUpon().setUri(fallback).build())
                     player.prepare()
                     player.play()
                 }
-            }
-
-            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-                player.currentMediaItem?.mediaMetadata?.extras?.getString("resolved_url")
             }
         })
 
@@ -68,14 +63,13 @@ class RadioPlaybackService : MediaSessionService() {
                 session: MediaSession,
                 controller: MediaSession.ControllerInfo
             ): MediaSession.ConnectionResult {
-                val commands = if (controller.isTrusted) {
+                val base = if (controller.isTrusted) {
                     MediaSession.ConnectionResult.DEFAULT_SESSION_COMMANDS
                 } else {
                     MediaSession.ConnectionResult.DEFAULT_UNTRUSTED_SESSION_COMMANDS
                 }
-                val sessionCommands = commands.buildUpon().add(exitCommand).build()
                 return MediaSession.ConnectionResult.AcceptedResultBuilder(session, controller)
-                    .setAvailableSessionCommands(sessionCommands)
+                    .setAvailableSessionCommands(base.buildUpon().add(exitCommand).build())
                     .build()
             }
 
@@ -95,14 +89,25 @@ class RadioPlaybackService : MediaSessionService() {
             }
         }
 
-        val exitButton = CommandButton.Builder(CommandButton.ICON_CLOSE)
+        val previous = CommandButton.Builder(CommandButton.ICON_PREVIOUS)
+            .setPlayerCommand(Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM)
+            .build()
+        val playPause = CommandButton.Builder(CommandButton.ICON_PLAY)
+            .setPlayerCommand(Player.COMMAND_PLAY_PAUSE)
+            .build()
+        val next = CommandButton.Builder(CommandButton.ICON_NEXT)
+            .setPlayerCommand(Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM)
+            .build()
+        val exit = CommandButton.Builder(CommandButton.ICON_UNDEFINED)
+            .setCustomIconResId(R.drawable.ic_exit)
             .setDisplayName("Çıkış")
             .setSessionCommand(exitCommand)
+            .setSlots(intArrayOf(CommandButton.SLOT_OVERFLOW))
             .build()
 
         mediaSession = MediaSession.Builder(this, player)
             .setCallback(callback)
-            .setMediaButtonPreferences(listOf(exitButton))
+            .setMediaButtonPreferences(listOf(previous, playPause, next, exit))
             .build()
     }
 
