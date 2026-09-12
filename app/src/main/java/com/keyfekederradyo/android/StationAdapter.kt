@@ -29,7 +29,7 @@ class StationAdapter(
         val row = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            setPadding(14.dp(context), 8.dp(context), 10.dp(context), 8.dp(context))
+            setPadding(14.dp(context), 8.dp(context), 8.dp(context), 8.dp(context))
             layoutParams = RecyclerView.LayoutParams(-1, 82.dp(context)).apply {
                 leftMargin = 10.dp(context)
                 rightMargin = 10.dp(context)
@@ -88,8 +88,9 @@ class StationAdapter(
 
         val favoriteView = ImageButton(context).apply {
             setBackgroundColor(Color.TRANSPARENT)
-            setColorFilter(Color.rgb(210, 210, 214))
-            layoutParams = LinearLayout.LayoutParams(48.dp(context), 48.dp(context))
+            setPadding(6.dp(context), 6.dp(context), 6.dp(context), 6.dp(context))
+            scaleType = android.widget.ImageView.ScaleType.CENTER_INSIDE
+            layoutParams = LinearLayout.LayoutParams(42.dp(context), 42.dp(context))
             contentDescription = "Favorilere ekle"
         }
 
@@ -120,6 +121,11 @@ class StationAdapter(
             if (favorite) android.R.drawable.btn_star_big_on
             else android.R.drawable.btn_star_big_off
         )
+        holder.favoriteView.setColorFilter(
+            if (favorite) Color.rgb(255, 122, 0) else Color.rgb(185, 185, 190)
+        )
+        holder.favoriteView.alpha = if (favorite) 1f else .78f
+        holder.favoriteView.contentDescription = if (favorite) "Favorilerden çıkar" else "Favorilere ekle"
 
         holder.itemView.setOnClickListener {
             holder.itemView.animate()
