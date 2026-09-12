@@ -1,13 +1,13 @@
 package com.keyfekederradyo.android
 
-import android.animation.ObjectAnimator
 import android.content.ComponentName
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.Gravity
 import android.view.View
-import android.view.ViewGroup
 import android.view.animation.DecelerateInterpolator
 import android.widget.EditText
 import android.widget.ImageButton
@@ -36,6 +36,8 @@ class MainActivity : AppCompatActivity() {
     private val muted = Color.rgb(150, 150, 155)
     private val prefs by lazy { getSharedPreferences("radio", MODE_PRIVATE) }
     private val executor = Executors.newSingleThreadExecutor()
+    private val taglineHandler = Handler(Looper.getMainLooper())
+    private var taglineIndex = 0
     private var stations = emptyList<Station>()
     private var currentIndex = -1
     private var controller: MediaController? = null
@@ -43,16 +45,43 @@ class MainActivity : AppCompatActivity() {
     private lateinit var adapter: StationAdapter
     private lateinit var status: TextView
     private lateinit var title: TextView
+    private lateinit var tagline: TextView
+    private lateinit var liveBadge: TextView
     private lateinit var search: EditText
     private lateinit var play: ImageButton
     private lateinit var spectrum: AudioSpectrumView
     private lateinit var mini: View
 
+    private val taglines = listOf(
+        "Keyfinin Frekansı.",
+        "Keyfin Neyi Çekerse.",
+        "Ruh Haline Bir Frekans.",
+        "Her Moda Bir Radyo.",
+        "Bir Frekans, Bin Keyif."
+    )
+
+    private val taglineRunnable = object : Runnable {
+        override fun run() {
+            taglineIndex = (taglineIndex + 1) % taglines.size
+            tagline.animate().alpha(0f).translationY(-4.dp().toFloat()).setDuration(180).withEndAction {
+                tagline.text = taglines[taglineIndex]
+                tagline.translationY = 4.dp().toFloat()
+                tagline.animate().alpha(1f).translationY(0f).setDuration(260).setInterpolator(DecelerateInterpolator()).start()
+            }.start()
+            taglineHandler.postDelayed(this, 3600)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.statusBarColor = bg
         window.navigationBarColor = bg
-        setContentView(buildUi())
+        val ui = buildUi()
+        ui.alpha = 0f
+        ui.translationY = 10.dp().toFloat()
+        setContentView(ui)
+        ui.animate().alpha(1f).translationY(0f).setStartDelay(120).setDuration(500).setInterpolator(DecelerateInterpolator()).start()
+        taglineHandler.postDelayed(taglineRunnable, 1800)
         connectPlayer()
         loadStations()
     }
@@ -62,21 +91,54 @@ class MainActivity : AppCompatActivity() {
 
         val top = LinearLayout(this).apply {
             gravity = Gravity.CENTER_VERTICAL
-            setPadding(14.dp(), 10.dp(), 14.dp(), 10.dp())
+            setPadding(14.dp(), 8.dp(), 10.dp(), 8.dp())
             setBackgroundColor(bg)
         }
         val menu = button(android.R.drawable.ic_menu_sort_by_size)
+        val brandBox = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            layoutParams = LinearLayout.LayoutParams(0, 62.dp(), 1f)
+        }
         val brand = TextView(this).apply {
-            text = "KEYFE KEDER\nR A D Y O"
+            text = "KEYFE KEDER"
             textSize = 18f
             setTextColor(white)
             gravity = Gravity.CENTER
             setTypeface(typeface, android.graphics.Typeface.BOLD)
             letterSpacing = .08f
-            layoutParams = LinearLayout.LayoutParams(0, 58.dp(), 1f)
         }
+        tagline = TextView(this).apply {
+            text = taglines[0]
+            textSize = 10.5f
+            setTextColor(orange)
+            gravity = Gravity.CENTER
+            alpha = .9f
+            letterSpacing = .03f
+        }
+        brandBox.addView(brand, LinearLayout.LayoutParams(-1, 31.dp()))
+        brandBox.addView(tagline, LinearLayout.LayoutParams(-1, 22.dp()))
+
+        val tools = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
         val searchButton = button(android.R.drawable.ic_menu_search)
-        top.addView(menu); top.addView(brand); top.addView(searchButton)
+        liveBadge = TextView(this).apply {
+            text = "● CANLI"
+            textSize = 10f
+            setTextColor(orange)
+            gravity = Gravity.CENTER
+            setPadding(8.dp(), 0, 8.dp(), 0)
+            background = GradientDrawable().apply {
+                setColor(Color.rgb(45, 27, 15))
+                setStroke(1.dp(), Color.rgb(110, 62, 20))
+                cornerRadius = 14.dp().toFloat()
+            }
+            layoutParams = LinearLayout.LayoutParams(64.dp(), 30.dp()).apply { leftMargin = 2.dp() }
+        }
+        tools.addView(searchButton)
+        tools.addView(liveBadge)
+        top.addView(menu)
+        top.addView(brandBox)
+        top.addView(tools)
         root.addView(top)
 
         val tabs = LinearLayout(this).apply {
@@ -133,7 +195,7 @@ class MainActivity : AppCompatActivity() {
             setOnClickListener { showFullPlayer() }
         }
         val logo = ImageView(this).apply {
-            setImageResource(com.keyfekederradyo.android.R.drawable.ic_keyfe_keder_logo)
+            setImageResource(R.drawable.ic_keyfe_keder_logo)
             scaleType = ImageView.ScaleType.CENTER_CROP
             layoutParams = LinearLayout.LayoutParams(54.dp(), 54.dp()).apply { rightMargin = 10.dp() }
         }
@@ -149,11 +211,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun buildBottomNav(): View {
-        val nav = LinearLayout(this).apply {
-            gravity = Gravity.CENTER
-            setPadding(6.dp(), 5.dp(), 6.dp(), 5.dp())
-            setBackgroundColor(surface)
-        }
+        val nav = LinearLayout(this).apply { gravity = Gravity.CENTER; setPadding(6.dp(), 5.dp(), 6.dp(), 5.dp()); setBackgroundColor(surface) }
         val items = listOf("⌂\nAna Sayfa", "▣\nRadyolar", "✦\nKeşfet", "♡\nFavoriler", "⚙\nAyarlar")
         items.forEachIndexed { index, label ->
             val item = TextView(this).apply {
@@ -179,20 +237,10 @@ class MainActivity : AppCompatActivity() {
 
     private fun showFullPlayer() {
         val dialog = android.app.Dialog(this)
-        val root = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER_HORIZONTAL
-            setPadding(24.dp(), 20.dp(), 24.dp(), 22.dp())
-            background = rounded(bg, 30)
-        }
+        val root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_HORIZONTAL; setPadding(24.dp(), 20.dp(), 24.dp(), 22.dp()); background = rounded(bg, 30) }
         val close = TextView(this).apply { text = "⌄"; textSize = 28f; setTextColor(muted); gravity = Gravity.CENTER; setOnClickListener { dialog.dismiss() } }
         root.addView(close, LinearLayout.LayoutParams(-1, 36.dp()))
-        val logo = ImageView(this).apply {
-            setImageResource(R.drawable.ic_keyfe_keder_logo)
-            scaleType = ImageView.ScaleType.CENTER_INSIDE
-            background = rounded(Color.rgb(24,24,25), 120)
-            elevation = 18.dp().toFloat()
-        }
+        val logo = ImageView(this).apply { setImageResource(R.drawable.ic_keyfe_keder_logo); scaleType = ImageView.ScaleType.CENTER_INSIDE; background = rounded(Color.rgb(24,24,25), 120); elevation = 18.dp().toFloat() }
         root.addView(logo, LinearLayout.LayoutParams(220.dp(), 220.dp()).apply { setMargins(0, 18.dp(), 0, 22.dp()) })
         val name = TextView(this).apply { text = title.text; textSize = 25f; setTextColor(white); gravity = Gravity.CENTER; setTypeface(typeface, android.graphics.Typeface.BOLD) }
         root.addView(name, LinearLayout.LayoutParams(-1, 40.dp()))
@@ -245,9 +293,11 @@ class MainActivity : AppCompatActivity() {
                         status.text = if (isPlaying) "Canlı" else "Durduruldu"
                         play.setImageResource(if (isPlaying) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play)
                         spectrum.setPlaying(isPlaying)
+                        liveBadge.text = if (isPlaying) "● CANLI" else "RADYO"
+                        liveBadge.setTextColor(if (isPlaying) orange else muted)
                     }
                     override fun onMediaItemTransition(item: MediaItem?, reason: Int) { title.text = item?.mediaMetadata?.title ?: "Bir radyo seç" }
-                    override fun onPlayerError(error: androidx.media3.common.PlaybackException) { status.text = "Yayın açılamadı"; spectrum.setPlaying(false) }
+                    override fun onPlayerError(error: androidx.media3.common.PlaybackException) { status.text = "Yayın açılamadı"; spectrum.setPlaying(false); liveBadge.text = "RADYO"; liveBadge.setTextColor(muted) }
                 })
             } catch (_: Exception) { status.text = "Oynatıcı başlatılamadı" }
         }, ContextCompat.getMainExecutor(this))
@@ -273,7 +323,7 @@ class MainActivity : AppCompatActivity() {
         val item = MediaItem.Builder().setMediaId(s.resolvedUrl).setUri(s.resolvedUrl)
             .setMediaMetadata(MediaMetadata.Builder().setTitle(s.name).build()).build()
         controller?.setMediaItem(item); controller?.prepare(); controller?.play()
-        title.text = s.name; status.text = "Bağlanıyor..."
+        title.text = s.name; status.text = "Bağlanıyor..."; liveBadge.text = "● CANLI"; liveBadge.setTextColor(orange)
         animateTap(mini)
     }
 
@@ -289,5 +339,5 @@ class MainActivity : AppCompatActivity() {
     private fun rounded(color: Int, radiusDp: Int) = GradientDrawable().apply { setColor(color); cornerRadius = radiusDp.dp().toFloat() }
     private fun animateTap(v: View) { v.animate().scaleX(.96f).scaleY(.96f).setDuration(70).withEndAction { v.animate().scaleX(1f).scaleY(1f).setDuration(130).setInterpolator(DecelerateInterpolator()).start() }.start() }
     private fun Int.dp() = (this * resources.displayMetrics.density).toInt()
-    override fun onDestroy() { controllerFuture?.let { MediaController.releaseFuture(it) }; executor.shutdownNow(); super.onDestroy() }
+    override fun onDestroy() { taglineHandler.removeCallbacks(taglineRunnable); controllerFuture?.let { MediaController.releaseFuture(it) }; executor.shutdownNow(); super.onDestroy() }
 }
