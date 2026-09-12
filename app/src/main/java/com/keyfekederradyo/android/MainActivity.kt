@@ -459,12 +459,16 @@ class MainActivity : AppCompatActivity() {
             gravity=Gravity.TOP or Gravity.END
             setPadding(d(10),d(9),d(10),0)
         }
-        val favorite=TextView(this).apply{
-            text=if(isFavorite(station))"♥" else "♡"
-            textSize=19f
-            gravity=Gravity.CENTER
-            setTextColor(if(isFavorite(station))Color.rgb(255,111,111) else 0xEEFFFFFF.toInt())
-            background=rounded(0x660B0B0D,18)
+        val favorite=ImageButton(this).apply{
+            setImageResource(if(isFavorite(station)) R.drawable.ic_heart else R.drawable.ic_heart_outline)
+            setColorFilter(if(isFavorite(station)) orange else white)
+            setBackgroundColor(Color.TRANSPARENT)
+            setPadding(d(7),d(7),d(7),d(7))
+            contentDescription=if(isFavorite(station)) "Favorilerden çıkar" else "Favorilere ekle"
+            setOnClickListener{
+                tap(it)
+                toggleFavorite(station)
+            }
         }
         top.addView(favorite,LinearLayout.LayoutParams(d(36),d(36)))
         card.addView(top,FrameLayout.LayoutParams(-1,d(46)).apply{gravity=Gravity.TOP})
