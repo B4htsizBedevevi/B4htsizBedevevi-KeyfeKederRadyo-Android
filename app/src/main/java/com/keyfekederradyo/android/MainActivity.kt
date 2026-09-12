@@ -144,9 +144,12 @@ class MainActivity : AppCompatActivity() {
             text = "RADYO"; textSize = 10f; setTextColor(muted); gravity = Gravity.CENTER
             background = rounded(Color.rgb(28,24,21), 14)
         }
+        val settingsButton = iconButton(R.drawable.ic_settings).apply { contentDescription = "Ayarlar" }
+        settingsButton.setOnClickListener { tap(it); showSettings() }
         top.addView(brandBox)
-        top.addView(searchButton, LinearLayout.LayoutParams(d(52), d(52)))
-        top.addView(liveBadge, LinearLayout.LayoutParams(d(64), d(30)).apply { leftMargin = d(4) })
+        top.addView(searchButton, LinearLayout.LayoutParams(d(48), d(48)))
+        top.addView(settingsButton, LinearLayout.LayoutParams(d(48), d(48)))
+        top.addView(liveBadge, LinearLayout.LayoutParams(d(64), d(30)).apply { leftMargin = d(2) })
         root.addView(top)
 
         search = EditText(this).apply {
