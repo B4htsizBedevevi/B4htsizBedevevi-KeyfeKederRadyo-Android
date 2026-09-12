@@ -42,7 +42,7 @@ class MainActivity : AppCompatActivity() {
     private val prefs by lazy { getSharedPreferences("radio", MODE_PRIVATE) }
     private val executor = Executors.newSingleThreadExecutor()
     private val handler = Handler(Looper.getMainLooper())
-    private val taglines = listOf("Keyfinin Frekansı.","Keyfin Neyi Çekerse.","Ruh Haline Bir Frekans.","Her Moda Bir Radyo.","Bir Frekans, Bin Keyif.")
+    private val taglines = listOf("Bugün ne açsak? 🙂","Keyfin ne isterse, frekans orada.","Biraz müzik, biraz keyif.","Kafana göre bir radyo bulalım.","Bir Frekans, Bin Keyif.")
     private var taglineIndex = 0
     private var stations = emptyList<Station>()
     private var currentIndex = -1
@@ -182,7 +182,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun buildBottomNav(): View {
         val nav = LinearLayout(this).apply { gravity = Gravity.CENTER; setPadding(d(6),d(5),d(6),d(6)); setBackgroundColor(surface) }
-        val items = listOf(R.drawable.ic_home to "Ana Sayfa",R.drawable.ic_radio to "Radyolar",R.drawable.ic_explore to "Keşfet",R.drawable.ic_heart to "Favoriler",R.drawable.ic_settings to "Ayarlar")
+        val items = listOf(R.drawable.ic_home to "Ana Sayfa",R.drawable.ic_radio to "Radyolar",R.drawable.ic_explore to "Keşfet",R.drawable.ic_heart to "Favoriler")
         items.forEachIndexed { index, pair ->
             val card = LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER; isClickable = true; isFocusable = true
@@ -215,7 +215,6 @@ class MainActivity : AppCompatActivity() {
             1 -> showRadios(stations)
             2 -> { stationList.visibility=View.GONE; homeScroll.visibility=View.VISIBLE; buildDiscover(); homeScroll.scrollTo(0,0) }
             3 -> showRadios(stations.filter { isFavorite(it) })
-            4 -> showSettings()
         }
     }
 
@@ -526,10 +525,10 @@ class MainActivity : AppCompatActivity() {
                     override fun onPlaybackStateChanged(playbackState:Int)=refresh()
                     override fun onMediaItemTransition(item:MediaItem?,reason:Int){title.text=item?.mediaMetadata?.title?:"Bir radyo seç";syncCurrentStation();refresh()}
                     override fun onMetadata(metadata:Metadata){for(i in 0 until metadata.length()){(metadata.get(i)as?IcyInfo)?.title?.trim()?.takeIf{it.isNotBlank()}?.let{raw->nowPlaying=formatNowPlaying(raw);if(!isFinishing&&!isDestroyed)status.text=nowPlaying;fullPlayerRefresh?.invoke()}}}
-                    override fun onPlayerError(error:androidx.media3.common.PlaybackException){nowPlaying="";if(!isFinishing&&!isDestroyed){status.text="Yayın açılamadı";spectrum.setPlaying(false);miniLogo.setPlaying(false);liveBadge.text="RADYO";liveBadge.setTextColor(muted);fullPlayerRefresh?.invoke()}}
+                    override fun onPlayerError(error:androidx.media3.common.PlaybackException){nowPlaying="";if(!isFinishing&&!isDestroyed){status.text="Bu yayın açılmadı. Başka bir frekans deneyelim. 🙂";spectrum.setPlaying(false);miniLogo.setPlaying(false);liveBadge.text="RADYO";liveBadge.setTextColor(muted);fullPlayerRefresh?.invoke()}}
                 })
                 syncCurrentStation()
-            }catch(_:Exception){if(!isFinishing&&!isDestroyed)status.text="Oynatıcı başlatılamadı"}
+            }catch(_:Exception){if(!isFinishing&&!isDestroyed)status.text="Müzik kutusunu açamadım. Bir daha deneyelim. 🙂"}
         },ContextCompat.getMainExecutor(this))
     }
 
@@ -546,11 +545,11 @@ class MainActivity : AppCompatActivity() {
         rememberStation(station);currentIndex=stations.indexOfFirst{it.resolvedUrl==station.resolvedUrl}.coerceAtLeast(0)
         val metadata=androidx.media3.common.MediaMetadata.Builder().setTitle(station.name).setArtist("Keyfe Keder Radyo").setAlbumTitle("Canlı Yayın").setArtworkUri(Uri.parse("android.resource://$packageName/drawable/station_artwork_default")).build()
         val item=MediaItem.Builder().setMediaId(station.resolvedUrl).setUri(station.resolvedUrl).setMediaMetadata(metadata).build()
-        try{controller?.setMediaItem(item);controller?.prepare();controller?.play()}catch(_:Exception){status.text="Yayın başlatılamadı";return}
+        try{controller?.setMediaItem(item);controller?.prepare();controller?.play()}catch(_:Exception){status.text="Bu radyoya bağlanamadık. Başka birini deneyelim. 🙂";return}
         title.text=station.name;nowPlaying="";status.text="Bağlanıyor...";liveBadge.text="BAĞLANIYOR";liveBadge.setTextColor(orange);miniLogo.bind(station.name,station.genre,station.logoUrl);miniLogo.setPlaying(true);spectrum.setStationSeed(station.name.hashCode());spectrum.restart();fullPlayerRefresh?.invoke()
     }
     private fun filter(query:String){val q=query.trim();val list=if(q.isBlank())stations else stations.filter{it.name.contains(q,true)||it.genre.contains(q,true)||it.country.contains(q,true)||it.language.contains(q,true)};if(selectedNav==0){showRadios(list);selectNav(1)}else adapter.submitList(list)}
-    private fun loadStations(){executor.execute{try{val loaded=StationRepository().load();runOnUiThread{if(isFinishing||isDestroyed)return@runOnUiThread;stations=loaded;adapter.submitList(loaded);if(selectedNav==0)buildHome();syncCurrentStation()}}catch(_:Exception){runOnUiThread{if(!isFinishing&&!isDestroyed)status.text="Radyolar yüklenemedi"}}}}
+    private fun loadStations(){executor.execute{try{val loaded=StationRepository().load();runOnUiThread{if(isFinishing||isDestroyed)return@runOnUiThread;stations=loaded;adapter.submitList(loaded);if(selectedNav==0)buildHome();syncCurrentStation()}}catch(_:Exception){runOnUiThread{if(!isFinishing&&!isDestroyed)status.text="Radyoları getiremedik, birazdan tekrar deneriz. 🙂"}}}}
     private fun historyStations():List<Station>{val urls=prefs.getString("history","").orEmpty().split("|").filter{it.isNotBlank()};return urls.mapNotNull{url->stations.firstOrNull{it.resolvedUrl==url}}.take(10)}
     private fun rememberStation(station:Station){val urls=prefs.getString("history","").orEmpty().split("|").filter{it.isNotBlank()&&it!=station.resolvedUrl}.toMutableList();urls.add(0,station.resolvedUrl);prefs.edit().putString("history",urls.take(12).joinToString("|")).apply()}
     private fun isFavorite(station:Station)=prefs.getBoolean(station.resolvedUrl,false)
