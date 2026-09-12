@@ -1,5 +1,7 @@
 package com.keyfekederradyo.android
 
+import android.app.PendingIntent
+import android.content.Intent
 import android.os.Handler
 import android.os.Looper
 import androidx.media3.common.AudioAttributes
@@ -73,14 +75,28 @@ class RadioPlaybackService : MediaSessionService() {
                 }
             }
         })
-        mediaSession = MediaSession.Builder(this, player).build()
+
+        val launchIntent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        val sessionActivity = PendingIntent.getActivity(
+            this,
+            1001,
+            launchIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        mediaSession = MediaSession.Builder(this, player)
+            .setSessionActivity(sessionActivity)
+            .build()
         timerHandler.post(timerRunnable)
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession = mediaSession
 
-    override fun onTaskRemoved(rootIntent: android.content.Intent?) {
-        if (!player.isPlaying) stopSelf()
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        // Keep the foreground media session alive while a station is playing.
+        // The explicit exit choice in MainActivity is the user-controlled way to stop playback.
+        if (!player.isPlaying && !player.playWhenReady) stopSelf()
         super.onTaskRemoved(rootIntent)
     }
 
